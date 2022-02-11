@@ -1,5 +1,4 @@
 from ssl import VerifyFlags
-from tabnanny import verbose
 from script import *
 from datetime import *
 from datetime import datetime
@@ -91,7 +90,7 @@ def menu(cur,db):
             archivo = input("Nombre de archivo: ") + ".xlsx"
             subir_archivo(archivo,cur,db)
         elif opcion == "2":
-            archivo = input("Nombre de archivo: ") + ".xlsx"
+            archivo = input("Nombre de archivo: ")
             escribir_ruta(db,archivo)
         print(menuprint)
         opcion = input()
