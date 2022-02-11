@@ -18,11 +18,30 @@ def insert_pedido(nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ci
     
 def subir_archivo(nombre_archivo,cur,db):
     verificacion = verificar_si_existe(cur)
-    print(verificacion[1])
     lista = exel_a_lista(nombre_archivo,"Hoja1")
     for x in lista:
-        print(verificacion[1])
-        remito = "SG-" + str(len(verificacion[0]))
+        if len(verificacion[0]) < 10:
+            remito = "SG-0000000000" + str(len(verificacion[0]))
+        elif len(verificacion[0]) < 100:
+            remito = "SG-000000000" + str(len(verificacion[0]))
+        elif len(verificacion[0]) < 1000:
+            remito = "SG-00000000" + str(len(verificacion[0]))
+        elif len(verificacion[0]) < 10000:
+            remito = "SG-0000000" + str(len(verificacion[0]))
+        elif len(verificacion[0]) < 100000:
+            remito = "SG-000000" + str(len(verificacion[0]))
+        elif len(verificacion[0]) < 1000000:
+            remito = "SG-00000" + str(len(verificacion[0]))
+        elif len(verificacion[0]) < 10000000:
+            remito = "SG-0000" + str(len(verificacion[0]))
+        elif len(verificacion[0]) < 100000000:
+            remito = "SG-000" + str(len(verificacion[0]))
+        elif len(verificacion[0]) < 1000000000:
+            remito = "SG-00" + str(len(verificacion[0]))
+        elif len(verificacion[0]) < 10000000000:
+            remito = "SG-0" + str(len(verificacion[0]))
+        elif len(verificacion[0]) < 100000000000:
+            remito = "SG-" + str(len(verificacion[0]))            
         nro_telefono = x[2]
         envios = x[3]
         nombre = x[4]
@@ -50,14 +69,14 @@ def subir_archivo(nombre_archivo,cur,db):
         if remito in str(verificacion[0]):
             print("ya existe")
         elif str(nro_telefono) in str(verificacion[1]):
-            print(f"\n\n\n{nro_telefono} ya existe\n\nSI - Para cargar un nuevo envio\n\nNO - Para omitir\n\nFIN - Para terminar el proceso")
+            print(f"\n\n\n{nro_telefono} ya existe\n\nSI - Para cargar un nuevo envio\n\nNO - Para omitir\n\nCancelar - Para terminar el proceso")
             opcion = input()
             if opcion.lower() == "si":
                 insert_pedido(remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,cur,db)
                 verificacion[0].append(remito)
             elif opcion.lower() == "no":
                 pass
-            elif opcion.lower() == "fin":
+            elif opcion.lower() == "cancelar":
                 exit()
             else: print("opcion incorrecta")
         else:
@@ -69,7 +88,7 @@ def subir_archivo(nombre_archivo,cur,db):
 def verificar_si_existe(cursor):
     lista_remito = []
     lista_telefono = []
-    cursor.execute("select * from GSolutions")
+    cursor.execute(f"select * from GSolutions")
     resultado = cursor.fetchall()
     for x in resultado:
         lista_remito.append(x[1])
@@ -91,7 +110,7 @@ def menu(cur,db):
             archivo = input("Nombre de archivo: ") + ".xlsx"
             subir_archivo(archivo,cur,db)
         elif opcion == "2":
-            archivo = input("Nombre de archivo: ") + ".xlsx"
+            archivo = input("Nombre de archivo: ")
             escribir_ruta(db,archivo)
         print(menuprint)
         opcion = input()
@@ -101,4 +120,8 @@ cursor = connect[0]
 midb = connect[1]
 
 
+def borrar_datos(tabla):
+    cursor.execute("truncate table " + tabla)
+    midb.commit()
+borrar_datos("GSolutions")
 menu(cursor,midb)
