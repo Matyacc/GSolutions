@@ -42,30 +42,25 @@ def subir_archivo(nombre_archivo,cur,db):
             remito = "SG-0" + str(len(verificacion[0]))
         elif len(verificacion[0]) < 100000000000:
             remito = "SG-" + str(len(verificacion[0]))            
-        nro_telefono = x[2]
-        envios = x[3]
-        nombre = x[4]
-        apellido = x[5]
-        dni = x[6]
-        provincia = x[7]
-        ciudad = x[8]
-        cp = x[9]
-        direccion = x[10]
-        altura = x[11]
-        torre_monoblock = x[12]
-        piso = x[13]
-        departamento = x[14]
-        manzana = x[15]
-        casa_lote = x[16]
-        barrio = x[17]
-        entre_calles = x[18]
-        referencia = x[19]
+        nro_telefono = x[3]
+        envios = x[4]
+        nombre = x[5]
+        apellido = x[6]
+        dni = x[7]
+        provincia = x[8]
+        ciudad = x[9]
+        cp = x[10]
+        direccion = x[11]
+        altura = x[12]
+        torre_monoblock = x[13]
+        piso = x[14]
+        departamento = x[15]
+        manzana = x[16]
+        casa_lote = x[17]
+        barrio = x[18]
+        entre_calles = x[19]
+        referencia = x[20]
         usuario_logistica = "MMS PACK"
-        print(verificacion)
-        print(verificacion[0])
-        print(verificacion[1])
-        print(remito in verificacion[0])
-        print(nro_telefono in verificacion[1])
         if remito in str(verificacion[0]):
             print("ya existe")
         elif str(nro_telefono) in str(verificacion[1]):
@@ -91,8 +86,8 @@ def verificar_si_existe(cursor):
     cursor.execute(f"select * from GSolutions")
     resultado = cursor.fetchall()
     for x in resultado:
-        lista_remito.append(x[1])
-        lista_telefono.append(x[2])
+        lista_remito.append(x[2])
+        lista_telefono.append(x[3])
     print(len(lista_remito))
     return [lista_remito, lista_telefono]
 
@@ -123,5 +118,4 @@ midb = connect[1]
 def borrar_datos(tabla):
     cursor.execute("truncate table " + tabla)
     midb.commit()
-borrar_datos("GSolutions")
 menu(cursor,midb)
