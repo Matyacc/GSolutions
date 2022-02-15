@@ -1,25 +1,29 @@
-from ssl import VerifyFlags
-from tabnanny import verbose
 from script import *
-from datetime import *
 from datetime import datetime
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import personalizado
+import os
 
 ahora = (datetime.today())
 fecha_hoy = str(ahora)[0:10]
 
 
 
-def insert_pedido(nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,usuario_logistica,cursor,midb):
-    sql = "insert into GSolutions (remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-    values = (nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_hoy,usuario_logistica)
+def insert_pedido(codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,usuario_logistica,cursor,midb):
+    sql = "insert into GSolutions (sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+    values = (codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_hoy,usuario_logistica)
     cursor.execute(sql,values)
     midb.commit()
     
     
-def subir_archivo(nombre_archivo,cur,db):
+def subir_archivo(nombre_archivo):
     verificacion = verificar_si_existe(cur)
     lista = exel_a_lista(nombre_archivo,"Hoja1")
     for x in lista:
+        connect = connect_db()
+        cur = connect[0]
+        db = connect[1]
+        sim = input("Scanner: ")
         if len(verificacion[0]) < 10:
             remito = "SG-0000000000" + str(len(verificacion[0]))
         elif len(verificacion[0]) < 100:
@@ -67,7 +71,19 @@ def subir_archivo(nombre_archivo,cur,db):
             print(f"\n\n\n{nro_telefono} ya existe\n\nSI - Para cargar un nuevo envio\n\nNO - Para omitir\n\nCancelar - Para terminar el proceso")
             opcion = input()
             if opcion.lower() == "si":
-                insert_pedido(remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,cur,db)
+                insert_pedido(sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,cur,db)
+                archivo = "Etiqueta.pdf"
+                c = canvas.Canvas(archivo, pagesize=personalizado)
+                c.setFont("Helvetica", 16)
+                c.drawString(5, 30,direccion + " " + str(altura) + torre_monoblock + " " + piso + " " + departamento)
+                if barrio == "":
+                    c.drawString(5, 50,ciudad)
+                else:
+                    c.drawString(5, 50,barrio)
+                c.drawString(5, 70,str(nro_telefono))
+                c.drawString(5, 90,nombre + " " + apellido)
+                c.save()
+                os.startfile(archivo,"print")
                 verificacion[0].append(remito)
             elif opcion.lower() == "no":
                 pass
@@ -77,7 +93,19 @@ def subir_archivo(nombre_archivo,cur,db):
         else:
             verificacion[0].append(remito)
             verificacion[1].append(nro_telefono)
-            insert_pedido(remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,cur,db)
+            insert_pedido(sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,cur,db)
+            archivo = "Etiqueta.pdf"
+            c = canvas.Canvas(archivo, pagesize=personalizado)
+            c.setFont("Helvetica", 16)
+            c.drawString(5, 30,direccion + " " + str(altura) + torre_monoblock + " " + piso + " " + departamento)
+            if barrio == "":
+                c.drawString(5, 50,ciudad)
+            else:
+                c.drawString(5, 50,barrio)
+            c.drawString(5, 70,str(nro_telefono))
+            c.drawString(5, 90,nombre + " " + apellido)
+            c.save()
+            os.startfile(archivo,"print")
         
 
 def verificar_si_existe(cursor):
@@ -92,7 +120,7 @@ def verificar_si_existe(cursor):
     return [lista_remito, lista_telefono]
 
 
-def menu(cur,db):
+def menu():
     menuprint = """
             1-Subir nuevo archivo
             2-crear archivo de ruta
@@ -103,10 +131,10 @@ def menu(cur,db):
     while opcion.lower() != "fin":
         if opcion == "1":
             archivo = input("Nombre de archivo: ") + ".xlsx"
-            subir_archivo(archivo,cur,db)
+            subir_archivo(archivo)
         elif opcion == "2":
             archivo = input("Nombre de archivo: ")
-            escribir_ruta(db,archivo)
+            escribir_ruta(archivo)
         print(menuprint)
         opcion = input()
 
@@ -115,7 +143,5 @@ cursor = connect[0]
 midb = connect[1]
 
 
-def borrar_datos(tabla):
-    cursor.execute("truncate table " + tabla)
-    midb.commit()
-menu(cursor,midb)
+
+menu()

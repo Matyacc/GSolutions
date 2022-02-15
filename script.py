@@ -1,6 +1,9 @@
 import mysql.connector
 import pandas as pd
-
+from datetime import datetime
+ahora = (datetime.today())
+fecha_hoy = str(ahora)[0:10]
+print(fecha_hoy)
 
 
 def connect_db():
@@ -26,8 +29,10 @@ def df_a_lista(data):
     print("lectura finalizada")
     return lista_data
 
-def escribir_ruta(database,nombre_archivo):
-    pd.read_sql('SELECT * FROM ViajesGsolutions',database).to_excel(f'{nombre_archivo}.xlsx')
+def escribir_ruta(nombre_archivo):
+    connect = connect_db()
+    midb = connect[1]
+    pd.read_sql('SELECT * FROM ViajesGsolutions where fecha = "' + fecha_hoy + '"',midb).to_excel(f'{nombre_archivo}.xlsx')
 
 
 
