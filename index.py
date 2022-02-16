@@ -17,6 +17,8 @@ def insert_pedido(codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,p
     
     
 def subir_archivo(nombre_archivo):
+    connect = connect_db()
+    cur = connect[0]
     verificacion = verificar_si_existe(cur)
     lista = exel_a_lista(nombre_archivo,"Hoja1")
     for x in lista:

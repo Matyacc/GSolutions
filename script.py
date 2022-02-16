@@ -32,7 +32,7 @@ def df_a_lista(data):
 def escribir_ruta(nombre_archivo):
     connect = connect_db()
     midb = connect[1]
-    pd.read_sql('SELECT * FROM ViajesGsolutions where fecha = "' + fecha_hoy + '"',midb).to_excel(f'{nombre_archivo}.xlsx')
+    pd.read_sql('SELECT * FROM GSolutions where fecha_despacho = "' + fecha_hoy + '"',midb).to_excel(f'{nombre_archivo}.xlsx')
 
 
 
