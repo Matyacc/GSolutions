@@ -6,10 +6,14 @@ import os
 
 ahora = (datetime.today())
 fecha_hoy = str(ahora)[0:10]
+dia_actual = fecha_hoy[8:10]
+mes_actual = fecha_hoy[5:7]
+año_actual = fecha_hoy[0:4]
+print(dia_actual+"-"+mes_actual+"-"+año_actual)
 
 
-
-def insert_pedido(codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,usuario_logistica,cursor,midb):
+def insert_pedido(codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,usuario_logistica):
+    cursor, midb = connect_db()
     sql = "insert into GSolutions (sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
     values = (codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_hoy,usuario_logistica)
     cursor.execute(sql,values)
@@ -17,15 +21,10 @@ def insert_pedido(codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,p
     
     
 def subir_archivo(nombre_archivo):
-    connect = connect_db()
-    cur = connect[0]
-    verificacion = verificar_si_existe(cur)
+    verificacion = verificar_si_existe()
     lista = exel_a_lista(nombre_archivo,"Hoja1")
     for x in lista:
-        connect = connect_db()
-        cur = connect[0]
-        db = connect[1]
-        sim = input("Scanner: ")
+        cur,db = connect_db()
         if len(verificacion[0]) < 10:
             remito = "SG-0000000000" + str(len(verificacion[0]))
         elif len(verificacion[0]) < 100:
@@ -67,13 +66,15 @@ def subir_archivo(nombre_archivo):
         entre_calles = x[19]
         referencia = x[20]
         usuario_logistica = "MMS PACK"
+        print(nro_telefono)
         if remito in str(verificacion[0]):
             print("ya existe")
         elif str(nro_telefono) in str(verificacion[1]):
             print(f"\n\n\n{nro_telefono} ya existe\n\nSI - Para cargar un nuevo envio\n\nNO - Para omitir\n\nCancelar - Para terminar el proceso")
             opcion = input()
             if opcion.lower() == "si":
-                insert_pedido(sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,cur,db)
+                sim = input("Scanner: ")
+                insert_pedido(sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica)
                 archivo = "Etiqueta.pdf"
                 c = canvas.Canvas(archivo, pagesize=personalizado)
                 c.setFont("Helvetica", 16)
@@ -95,7 +96,8 @@ def subir_archivo(nombre_archivo):
         else:
             verificacion[0].append(remito)
             verificacion[1].append(nro_telefono)
-            insert_pedido(sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,cur,db)
+            sim = input("Scanner: ")
+            insert_pedido(sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica)
             archivo = "Etiqueta.pdf"
             c = canvas.Canvas(archivo, pagesize=personalizado)
             c.setFont("Helvetica", 16)
@@ -108,9 +110,11 @@ def subir_archivo(nombre_archivo):
             c.drawString(5, 90,nombre + " " + apellido)
             c.save()
             os.startfile(archivo,"print")
+    
         
 
-def verificar_si_existe(cursor):
+def verificar_si_existe():
+    cursor, midb = connect_db()
     lista_remito = []
     lista_telefono = []
     cursor.execute(f"select * from GSolutions")
@@ -125,25 +129,24 @@ def verificar_si_existe(cursor):
 def menu():
     menuprint = """
             1-Subir nuevo archivo
-            2-crear archivo de ruta
-    """
+            2-Enviar correo con estado de entregas
+            """
 
     print(menuprint)
     opcion = input()
     while opcion.lower() != "fin":
         if opcion == "1":
-            archivo = input("Nombre de archivo: ") + ".xlsx"
+            archivo = "PLANILLA GLOBAL " + dia_actual+"-"+mes_actual+"-"+año_actual+"-MMS.xlsx"
             subir_archivo(archivo)
+            asignaciones = "PLANILLA GLOBAL " + dia_actual+"-"+mes_actual+"-"+año_actual+".xlsx"
+            escribir_ruta(asignaciones)
+            enviar_correo(["logistica@gsolutions.com.ar"],"Asignación",asignaciones)
+
         elif opcion == "2":
-            archivo = input("Nombre de archivo: ")
-            escribir_ruta(archivo)
+            estados = "PLANILLA GLOBAL " + dia_actual+"-"+mes_actual+"-"+año_actual+".xlsx"
+            escribir_ruta(estados)
+            enviar_correo(["logistica@gsolutions.com.ar"],"Estado de entregas",estados)
         print(menuprint)
         opcion = input()
-
-connect = connect_db()
-cursor = connect[0]
-midb = connect[1]
-
-
 
 menu()
