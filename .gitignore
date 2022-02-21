@@ -1,0 +1,5 @@
+venv
+*.xlsx
+Etiqueta.pdf
+__pycache__
+Gsolutions.bat
