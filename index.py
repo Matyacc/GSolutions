@@ -143,12 +143,12 @@ def menu():
             subir_archivo(archivo)
             asignaciones = f"PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}.xlsx"
             escribir_ruta(asignaciones)
-            enviar_correo(["acciaiomatiassebastian@gmail.com"],"Asignación",asignaciones)
+            enviar_correo(["logistica@gsolutions.com.ar"],"Asignación",asignaciones)
             playsound("sonidos/error.mp3")
         elif opcion == "2":
             estados = f"PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}.xlsx"
             escribir_ruta(estados)
-            enviar_correo(["acciaiomatiassebastian@gmail.com"],"Estado de entregas",estados)
+            enviar_correo(["logistica@gsolutions.com.ar"],"Estado de entregas",estados)
         print(menuprint)
         opcion = input()
 
