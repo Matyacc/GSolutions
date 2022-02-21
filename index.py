@@ -19,13 +19,13 @@ def insert_pedido(codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,p
     values = (codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_hoy,usuario_logistica)
     cursor.execute(sql,values)
     midb.commit()
+    cursor.close()
     
     
 def subir_archivo(nombre_archivo):
     verificacion = verificar_si_existe()
     lista = exel_a_lista(nombre_archivo,"Hoja1")
     for x in lista:
-        cur,db = connect_db()
         if len(verificacion[0]) < 10:
             remito = "SG-0000000000" + str(len(verificacion[0]))
         elif len(verificacion[0]) < 100:
@@ -79,8 +79,8 @@ def subir_archivo(nombre_archivo):
                 insert_pedido(sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica)
                 archivo = "Etiqueta.pdf"
                 c = canvas.Canvas(archivo, pagesize=personalizado)
-                c.setFont("Helvetica", 16)
-                c.drawString(5, 30,direccion + " " + str(altura) + torre_monoblock + " " + piso + " " + departamento)
+                c.setFont("Helvetica", 14)
+                c.drawString(5, 30,f"{direccion} {altura} {torre_monoblock} {piso} {departamento}")
                 if barrio == "":
                     c.drawString(5, 50,ciudad)
                 else:
@@ -102,14 +102,14 @@ def subir_archivo(nombre_archivo):
             insert_pedido(sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica)
             archivo = "Etiqueta.pdf"
             c = canvas.Canvas(archivo, pagesize=personalizado)
-            c.setFont("Helvetica", 16)
-            c.drawString(5, 30,direccion + " " + str(altura) + torre_monoblock + " " + piso + " " + departamento)
+            c.setFont("Helvetica", 14)
+            c.drawString(5, 30,f"{direccion} {altura} {torre_monoblock} {piso} {departamento}")
             if barrio == "":
-                c.drawString(5, 50,ciudad)
+                c.drawString(5, 50,str(ciudad))
             else:
-                c.drawString(5, 50,barrio)
+                c.drawString(5, 50,str(barrio))
             c.drawString(5, 70,str(nro_telefono))
-            c.drawString(5, 90,nombre + " " + apellido)
+            c.drawString(5, 90,f"{nombre} {apellido}")
             c.save()
             os.startfile(archivo,"print")
     
@@ -125,6 +125,7 @@ def verificar_si_existe():
         lista_remito.append(x[2])
         lista_telefono.append(x[3])
     print(len(lista_remito))
+    cursor.close()
     return [lista_remito, lista_telefono]
 
 
@@ -138,16 +139,16 @@ def menu():
     opcion = input()
     while opcion.lower() != "fin":
         if opcion == "1":
-            archivo = "PLANILLA GLOBAL " + dia_actual+"-"+mes_actual+"-"+año_actual+"-MMS.xlsx"
+            archivo = f"PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}-MMS.xlsx"
             subir_archivo(archivo)
-            asignaciones = "PLANILLA GLOBAL " + dia_actual+"-"+mes_actual+"-"+año_actual+".xlsx"
+            asignaciones = f"PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}.xlsx"
             escribir_ruta(asignaciones)
-            enviar_correo(["logistica@gsolutions.com.ar"],"Asignación",asignaciones)
+            enviar_correo(["acciaiomatiassebastian@gmail.com"],"Asignación",asignaciones)
             playsound("sonidos/error.mp3")
         elif opcion == "2":
-            estados = "PLANILLA GLOBAL " + dia_actual+"-"+mes_actual+"-"+año_actual+".xlsx"
+            estados = f"PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}.xlsx"
             escribir_ruta(estados)
-            enviar_correo(["logistica@gsolutions.com.ar"],"Estado de entregas",estados)
+            enviar_correo(["acciaiomatiassebastian@gmail.com"],"Estado de entregas",estados)
         print(menuprint)
         opcion = input()
 
