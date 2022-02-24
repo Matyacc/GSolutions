@@ -18,17 +18,7 @@ mes_actual = fecha_hoy[5:7]
 año_actual = fecha_hoy[0:4]
 print(dia_actual+"-"+mes_actual+"-"+año_actual)
 
-def formato_fecha(fecha):
-    fech = str(fecha)[0:10]
-    dia = fech[8:10]
-    mes = fech[5:7]
-    año = fech[0:4]
-    return dia, mes, año
-if datetime(1991,9,15) > datetime.today():
-    print("todavia falta")
-elif datetime(1991,9,15) < datetime.today():
 
-    print("ya paso")
 #convierte las filas de un exel en una lista de datos
 def exel_a_lista(nombre_archivo,nombre_hoja):
     data = pd.read_excel(nombre_archivo,sheet_name=nombre_hoja, skiprows=0)
@@ -47,7 +37,6 @@ def df_a_lista(data):
 def escribir_ruta(nombre_archivo):
     midb = connect_db()
     pd.read_sql('SELECT * FROM GSolutions where fecha_despacho = current_date()',midb).to_excel(f'{nombre_archivo}')
-
 
 #envia un correo con las asignaciones 
 # y estado actual del dia en curso
@@ -78,7 +67,6 @@ def enviar_correo(destinos,mensaje_asunto,adjunto):
     sesion_smtp.sendmail(remitente, destinatarios, texto)
     sesion_smtp.quit()
 
-
 #verifica si existe el nro de telefono y 
 # el nro de remito en la base de datos
 def verificar_si_existe(midb):
@@ -92,123 +80,55 @@ def verificar_si_existe(midb):
         lista_telefono.append(x[1])
     print(len(lista_remito))
     return [lista_remito, lista_telefono]
-
-
-#la funcion mas importante y compleja
-#sube informacion a la base de datos 
-def subir_archivo(nombre_archivo):
-    db = connect_db()
-    verificacion = verificar_si_existe(db)
-    lista = exel_a_lista(nombre_archivo,"Hoja1")
+   
+def generar_etiqueta(_direccion, _altura,_barrio,_ciudad,_nombre,_apellido,_nro_telefono, _torre_monoblock, _piso, _dpto,_manzana, _casa_lote, _entre_calles, _archivo):
+    infodir = f"{_direccion} {_altura}"
+    infobarrio = f"E/ {_entre_calles}"
+    if _torre_monoblock != "" or _casa_lote != "":
+        infobarrio = f"E/ {_entre_calles} torre: {_torre_monoblock} casa: {_casa_lote}"
+    infodpto = f"Piso: {_piso} dpto: {_dpto}"
+    if len(infodpto) < 14:
+        infodpto = ""
+    localidad = ""
+    if _barrio == "":
+        localidad = _ciudad
+    else:
+        localidad = _barrio
+    c = canvas.Canvas(_archivo, pagesize=personalizado)
+    if (len(_nombre) + len(_apellido)) > 27:
+        c.setFont("Helvetica", 12)
+    else:
+        c.setFont("Helvetica", 16)
+    c.drawString(5, 110,f"{_nombre} {_apellido}")
+    c.setFont("Helvetica", 16)
+    c.drawString(5, 90,str(_nro_telefono))
+    if len(infodir) > 44:
+        c.setFont("Helvetica", 8)
+    elif len(infodir) > 34:
+        c.setFont("Helvetica", 10)
+    elif len(infodir) > 28:
+        c.setFont("Helvetica", 12)
+    else:
+        c.setFont("Helvetica", 16)
+    c.drawString(5, 70,infodir)
+    c.setFont("Helvetica", 16)
+    c.drawString(5, 50,infodpto)
+    if len(infobarrio) > 44:
+        c.setFont("Helvetica", 8)
+    elif len(infobarrio) > 34:
+        c.setFont("Helvetica", 10)
+    elif len(infobarrio) > 28:
+        c.setFont("Helvetica", 12)
+    else:
+        c.setFont("Helvetica", 16)
+    c.drawString(5, 30,infobarrio)
+    c.setFont("Helvetica", 16)
+    c.drawString(5, 10,str(localidad))
     
-    for x in lista:
-        #genero nro de envio "estetico"
-        if len(verificacion[0]) < 10:
-            remito = "SG-0000000000" + str(len(verificacion[0]))
-        elif len(verificacion[0]) < 100:
-            remito = "SG-000000000" + str(len(verificacion[0]))
-        elif len(verificacion[0]) < 1000:
-            remito = "SG-00000000" + str(len(verificacion[0]))
-        elif len(verificacion[0]) < 10000:
-            remito = "SG-0000000" + str(len(verificacion[0]))
-        elif len(verificacion[0]) < 100000:
-            remito = "SG-000000" + str(len(verificacion[0]))
-        elif len(verificacion[0]) < 1000000:
-            remito = "SG-00000" + str(len(verificacion[0]))
-        elif len(verificacion[0]) < 10000000:
-            remito = "SG-0000" + str(len(verificacion[0]))
-        elif len(verificacion[0]) < 100000000:
-            remito = "SG-000" + str(len(verificacion[0]))
-        elif len(verificacion[0]) < 1000000000:
-            remito = "SG-00" + str(len(verificacion[0]))
-        elif len(verificacion[0]) < 10000000000:
-            remito = "SG-0" + str(len(verificacion[0]))
-        elif len(verificacion[0]) < 100000000000:
-            remito = "SG-" + str(len(verificacion[0]))     
-        
-        # obtengo los datos de el exel accediendo por posicion
-        # arranca en cero la fila A       
-        nro_telefono = x[3]
-        envios = x[4]
-        nombre = x[5]
-        apellido = x[6]
-        dni = x[7]
-        provincia = x[8]
-        ciudad = x[9]
-        cp = x[10]
-        direccion = x[11]
-        altura = str(x[12])
-        if ".0" in altura: altura = altura [0:-2] #<-----Arreglo
-        torre_monoblock = x[13]
-        piso = x[14]
-        departamento = x[15]
-        manzana = x[16]
-        casa_lote = x[17]
-        barrio = x[18]
-        entre_calles = x[19]
-        referencia = x[20]
-        usuario_logistica = "MMS PACK"
-
-        #utilizo la lista de verificacion 
-        #para controlar si existe el nro de telefono
-        if str(nro_telefono) in str(verificacion[1]):
-            print(f"   {nro_telefono} ya existe")
-            print("")
-            cursor = db.cursor()
-            cursor.execute(f"select fecha_despacho, direccion, altura from GSolutions where nro_telefono = {int(nro_telefono)}")
-            resultado = cursor.fetchall()
-            print(len(resultado))
-            if len(resultado) == 1:
-                x = resultado[0]
-                print(f"{x[0]}          {x[1]} {x[2]}")
-            elif len(resultado) > 1:
-                for x in resultado:
-                    print(f"{x[0]}          {x[1]} {x[2]}")
-            #opciones a realizar en caso de telefono repetido
-            print(       """
-            SI - Para cargar un nuevo envio
-            Cancelar - Para terminar el proceso""")
-            playsound("sonidos/ok.mp3")
-            opcion = input()
-            if opcion.lower() == "si":
-                sim = input("Scanner: ")
-                insert_pedido(sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,db)
-                archivo = "Etiqueta.pdf"
-                c = canvas.Canvas(archivo, pagesize=personalizado)
-                c.setFont("Helvetica", 14)
-                c.drawString(5, 30,f"{direccion} {altura} {torre_monoblock} {piso} {departamento}")
-                if barrio == "":
-                    c.drawString(5, 50,ciudad)
-                else:
-                    c.drawString(5, 50,barrio)
-                c.drawString(5, 70,str(nro_telefono))
-                c.drawString(5, 90,nombre + " " + apellido)
-                c.save()
-                # os.startfile(archivo,"print")
-                verificacion[0].append(remito)
-            elif opcion.lower() == "cancelar":
-                exit()
-            else:
-                pass
-        else:
-            verificacion[0].append(remito)
-            verificacion[1].append(nro_telefono)
-            sim = input("Scanner: ")
-            insert_pedido(sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,db)
-            print(f"Nuevo registro agregado: {nro_telefono}")
-            archivo = "Etiqueta.pdf"
-            c = canvas.Canvas(archivo, pagesize=personalizado)
-            c.setFont("Helvetica", 14)
-            c.drawString(5, 30,f"{direccion} {altura} {torre_monoblock} {piso} {departamento}")
-            if barrio == "":
-                c.drawString(5, 50,str(ciudad))
-            else:
-                c.drawString(5, 50,str(barrio))
-            c.drawString(5, 70,str(nro_telefono))
-            c.drawString(5, 90,f"{nombre} {apellido}")
-            c.save()
-            # os.startfile(archivo,"print")
-    db.close()
+    
+    
+    
+    c.save()
 
 def verificar_conexion(midb):
     if midb.is_connected() == False:
@@ -222,12 +142,11 @@ def verificar_conexion(midb):
             print("Error en la coneccion")
     return midb
 
-
 def insert_pedido(codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,usuario_logistica,midb):
     db = verificar_conexion(midb)
     cursor = db.cursor()
     sql = "insert into GSolutions (sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-    values = (codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_hoy,usuario_logistica)
+    values = (codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_hoy,usuario_logistica,)
     cursor.execute(sql,values)
     db.commit()
 
@@ -238,3 +157,107 @@ def borrar_hoy():
     values = (f"{año_actual}-{mes_actual}-{dia_actual}",)
     cursor.execute(sql,values)
     midb.commit()
+
+
+#la funcion mas importante y compleja
+#sube informacion a la base de datos 
+def subir_archivo(nombre_archivo):
+    db = connect_db()
+    verificacion = verificar_si_existe(db)
+    contenidoArchivo = exel_a_lista(nombre_archivo,"Hoja1")
+    
+    for pedido in contenidoArchivo:
+        #genero nro de envio "estetico"
+        if len(verificacion[0]) < 10:
+            remito = "SG-0000000000" + str(len(verificacion[0]))
+        elif len(verificacion[0]) < 100:
+            remito = "SG-000000000" + str(len(verificacion[0]))
+        elif len(verificacion[0]) < 1000:
+            remito = "SG-00000000" + str(len(verificacion[0]))
+        elif len(verificacion[0]) < 10000:
+            remito = "SG-0000000" + str(len(verificacion[0]))
+        elif len(verificacion[0]) < 100000:
+            remito = "SG-000000" + str(len(verificacion[0]))
+ 
+        
+        # obtengo los datos de el epedidoel accediendo por posicion
+        # arranca en cero la fila A       
+        nro_telefono = pedido[3]
+        envios = pedido[4]
+        nombre = pedido[5]
+        apellido = pedido[6]
+        dni = pedido[7]
+        provincia = pedido[8]
+        ciudad = pedido[9].lower()
+        if "caba" in ciudad or "capital federal" in ciudad or "ciudad de buenos aires" in ciudad or "c.a.b.a." in ciudad or "capital federal (caba)" in ciudad or "ciudad autonoma de buenos aires" in ciudad or "c.a.b.a" in ciudad or "capital" in ciudad:
+            ciudad = "CABA"
+        cp = pedido[10]
+        direccion = pedido[11]
+        altura = str(pedido[12])
+        if ".0" in altura: altura = altura [0:-2] #<-----Arreglo
+        torre_monoblock = pedido[13]
+        piso = pedido[14]
+        departamento = pedido[15]
+        manzana = pedido[16]
+        casa_lote = pedido[17]
+        barrio = pedido[18]
+        entre_calles = pedido[19]
+        referencia = pedido[20]
+        usuario_logistica = "MMS PACK"
+        if ciudad == "CABA":
+            precio = 300
+            costo = 180
+        else:
+            precio = 500
+            costo = 250
+        #utilizo la lista de verificacion 
+        #para controlar si existe el nro de telefono
+        if str(nro_telefono) in str(verificacion[1]):
+            menuRepetido = """
+            SI - Para cargar un nuevo envio
+            Cancelar - Para terminar el proceso"""
+            cursor = db.cursor()
+            cursor.execute(f"select fecha_despacho, direccion, altura from GSolutions where nro_telefono = {int(nro_telefono)}")
+            resultado = cursor.fetchall()
+            if len(resultado) == 1:
+                x = resultado[0]
+                if str(x[0]) != str(fecha_hoy):
+                    opcion = "si"
+                else:
+                    playsound("sonidos/ok.mp3")
+                    print(f"   {nro_telefono} ya existe")
+                    print(f"{x[0]}          {x[1]} {x[2]}")
+                    print(menuRepetido)
+                    opcion = input()
+            elif len(resultado) > 1:
+                for x in resultado:
+                    if str(x[0]) != str(fecha_hoy):
+                        opcion = "si"
+                    else:
+                        playsound("sonidos/ok.mp3")
+                        print(f"   {nro_telefono} ya existe")
+                        print(f"{x[0]}          {x[1]} {x[2]}")
+                        print(menuRepetido)
+                        opcion = input()
+
+            
+            if opcion != "si":
+                opcion = input()
+            if opcion.lower() == "si":
+                sim = input("Scanner: ")
+                insert_pedido(sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,db)
+                generar_etiqueta(direccion,altura,barrio,ciudad,nombre,apellido,nro_telefono,torre_monoblock,piso,departamento,manzana,casa_lote,entre_calles,"Etiqueta.pdf")
+                verificacion[0].append(remito)
+            elif opcion.lower() == "cancelar":
+                exit()
+            else:
+                pass
+        else:
+            verificacion[0].append(remito)
+            verificacion[1].append(nro_telefono)
+            sim = input("Scanner: ")
+            insert_pedido(sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,db)
+            print(f"Nuevo registro agregado: {nro_telefono}")
+            generar_etiqueta(direccion,altura,barrio,ciudad,nombre,apellido,nro_telefono,torre_monoblock,piso,departamento,manzana,casa_lote,entre_calles,"Etiqueta.pdf")
+    db.close()
+ 

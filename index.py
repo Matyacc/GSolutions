@@ -15,8 +15,9 @@ def menu():
 
             Comandos especiales:
 
-            "Resetear dia"  Para borrar el dia actual escriba  
-            "Fin" para salir
+            "Descargar todo"    /   Descargar archivo con todos los viajes
+            "Resetear dia"      /   Para borrar el dia actual escriba  
+            "Fin"               /   para salir
             """
 
     print(menuprint)
@@ -33,9 +34,10 @@ def menu():
             estados = f"PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}.xlsx"
             escribir_ruta(estados)
             # enviar_correo(["logistica@gsolutions.com.ar"],"Estado de entregas",estados)
-        elif opcion == "3":
+        elif opcion.lower() == "descargar todo":
+            archivo = input("Introdusca nombre de archivo: ")
             midb = connect_db()
-            pd.read_sql('SELECT * FROM GSolutions',midb).to_excel(f"descargas/viajes.xlsx")
+            pd.read_sql('SELECT * FROM GSolutions',midb).to_excel(f"descargas/{archivo}.xlsx")
         elif opcion.lower() == "resetear dia":
             borrar_hoy()
             print("Todos los registros de hoy fueron eliminados")

@@ -3,3 +3,5 @@ venv
 Etiqueta.pdf
 __pycache__
 Gsolutions.bat
+database.py
+
