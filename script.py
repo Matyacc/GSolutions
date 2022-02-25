@@ -1,6 +1,5 @@
 import pandas as pd
 from datetime import datetime
-import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -10,6 +9,7 @@ from playsound import playsound
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import personalizado
 from database import connect_db
+import os
 
 ahora = (datetime.today())
 fecha_hoy = str(ahora)[0:10]
@@ -34,7 +34,7 @@ def df_a_lista(data):
     return lista_data
 
 #genera un exel de Gsolutions con los viajes del dia
-def escribir_ruta(nombre_archivo):
+def escribir_ruta_hoy(nombre_archivo):
     midb = connect_db()
     pd.read_sql('SELECT * FROM GSolutions where fecha_despacho = current_date()',midb).to_excel(f'{nombre_archivo}')
 
@@ -124,12 +124,8 @@ def generar_etiqueta(_direccion, _altura,_barrio,_ciudad,_nombre,_apellido,_nro_
     c.drawString(5, 30,infobarrio)
     c.setFont("Helvetica", 16)
     c.drawString(5, 10,str(localidad))
-    
-    
-    
-    
     c.save()
-
+    
 def verificar_conexion(midb):
     if midb.is_connected() == False:
         print("Reconectando base de datos")
@@ -158,28 +154,13 @@ def borrar_hoy():
     cursor.execute(sql,values)
     midb.commit()
 
-
-#la funcion mas importante y compleja
-#sube informacion a la base de datos 
 def subir_archivo(nombre_archivo):
     db = connect_db()
     verificacion = verificar_si_existe(db)
     contenidoArchivo = exel_a_lista(nombre_archivo,"Hoja1")
     
     for pedido in contenidoArchivo:
-        #genero nro de envio "estetico"
-        if len(verificacion[0]) < 10:
-            remito = "SG-0000000000" + str(len(verificacion[0]))
-        elif len(verificacion[0]) < 100:
-            remito = "SG-000000000" + str(len(verificacion[0]))
-        elif len(verificacion[0]) < 1000:
-            remito = "SG-00000000" + str(len(verificacion[0]))
-        elif len(verificacion[0]) < 10000:
-            remito = "SG-0000000" + str(len(verificacion[0]))
-        elif len(verificacion[0]) < 100000:
-            remito = "SG-000000" + str(len(verificacion[0]))
- 
-        
+        remito = generar_nro_remito(verificacion)
         # obtengo los datos de el epedidoel accediendo por posicion
         # arranca en cero la fila A       
         nro_telefono = pedido[3]
@@ -189,8 +170,7 @@ def subir_archivo(nombre_archivo):
         dni = pedido[7]
         provincia = pedido[8]
         ciudad = pedido[9].lower()
-        if "caba" in ciudad or "capital federal" in ciudad or "ciudad de buenos aires" in ciudad or "c.a.b.a." in ciudad or "capital federal (caba)" in ciudad or "ciudad autonoma de buenos aires" in ciudad or "c.a.b.a" in ciudad or "capital" in ciudad:
-            ciudad = "CABA"
+        if "caba" in ciudad or "capital federal" in ciudad or "ciudad de buenos aires" in ciudad or "capital federal (caba)" in ciudad or "ciudad autonoma de buenos aires" in ciudad or "c.a.b.a" in ciudad or "capital" in ciudad: ciudad = "CABA"
         cp = pedido[10]
         direccion = pedido[11]
         altura = str(pedido[12])
@@ -204,60 +184,87 @@ def subir_archivo(nombre_archivo):
         entre_calles = pedido[19]
         referencia = pedido[20]
         usuario_logistica = "MMS PACK"
-        if ciudad == "CABA":
-            precio = 300
-            costo = 180
-        else:
-            precio = 500
-            costo = 250
-        #utilizo la lista de verificacion 
-        #para controlar si existe el nro de telefono
-        if str(nro_telefono) in str(verificacion[1]):
-            menuRepetido = """
-            SI - Para cargar un nuevo envio
-            Cancelar - Para terminar el proceso"""
-            cursor = db.cursor()
-            cursor.execute(f"select fecha_despacho, direccion, altura from GSolutions where nro_telefono = {int(nro_telefono)}")
-            resultado = cursor.fetchall()
-            if len(resultado) == 1:
-                x = resultado[0]
-                if str(x[0]) != str(fecha_hoy):
-                    opcion = "si"
-                else:
-                    playsound("sonidos/ok.mp3")
-                    print(f"   {nro_telefono} ya existe")
-                    print(f"{x[0]}          {x[1]} {x[2]}")
-                    print(menuRepetido)
-                    opcion = input()
-            elif len(resultado) > 1:
-                for x in resultado:
-                    if str(x[0]) != str(fecha_hoy):
-                        opcion = "si"
-                    else:
-                        playsound("sonidos/ok.mp3")
-                        print(f"   {nro_telefono} ya existe")
-                        print(f"{x[0]}          {x[1]} {x[2]}")
-                        print(menuRepetido)
-                        opcion = input()
 
-            
-            if opcion != "si":
-                opcion = input()
+        if str(nro_telefono) in str(verificacion[1]):
+            opcion = consulta_repetido(nro_telefono,db)
             if opcion.lower() == "si":
-                sim = input("Scanner: ")
-                insert_pedido(sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,db)
-                generar_etiqueta(direccion,altura,barrio,ciudad,nombre,apellido,nro_telefono,torre_monoblock,piso,departamento,manzana,casa_lote,entre_calles,"Etiqueta.pdf")
-                verificacion[0].append(remito)
-            elif opcion.lower() == "cancelar":
-                exit()
+                pedido_confirmado(remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entre_calles,referencia,usuario_logistica,db,verificacion)
             else:
+                print("pedido omitido")
                 pass
         else:
-            verificacion[0].append(remito)
-            verificacion[1].append(nro_telefono)
-            sim = input("Scanner: ")
-            insert_pedido(sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,db)
-            print(f"Nuevo registro agregado: {nro_telefono}")
-            generar_etiqueta(direccion,altura,barrio,ciudad,nombre,apellido,nro_telefono,torre_monoblock,piso,departamento,manzana,casa_lote,entre_calles,"Etiqueta.pdf")
+            pedido_confirmado(remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,db,verificacion)
     db.close()
- 
+
+def consulta_repetido(_nro_telefono,_db):
+    cursor = _db.cursor()
+    cursor.execute(f"select fecha_despacho, direccion, altura from GSolutions where nro_telefono = {int(_nro_telefono)}")
+    resultado = cursor.fetchall()
+    if len(resultado) == 1:
+        x = resultado[0]
+        if str(x[0]) != str(fecha_hoy):
+            opcion = "si"
+        else:
+            opcion = aviso_repetido(_nro_telefono,x)
+    elif len(resultado) > 1:
+        lista_fechas = []
+        for x in resultado:
+            lista_fechas.append(str(x[0]))
+        if str(fecha_hoy) not in str(lista_fechas):
+            opcion = "si"
+        else:
+            opcion = aviso_repetido(_nro_telefono,x)
+    return opcion
+
+def pedido_confirmado(_remito,_nro_telefono,_envios,_nombre,_apellido,_dni,_provincia,_ciudad,_cp,_direccion,_altura,_torre_monoblock,_piso,_departamento,_manzana,_casa_lote,_barrio,_entre_calles,_referencia,_usuario_logistica,_db,_verificacion):
+    _verificacion[0].append(_remito)
+    _verificacion[1].append(_nro_telefono)
+    _sim = input("Scanner: ")
+    insert_pedido(_sim,_remito,_nro_telefono,_envios,_nombre,_apellido,_dni,_provincia,_ciudad,_cp,_direccion,_altura,_torre_monoblock,_piso,_departamento,_manzana,_casa_lote,_barrio,_entre_calles,_referencia,_usuario_logistica,_db)
+    print(f"Nuevo registro agregado: {_nro_telefono}")
+    archivo_etiqueta = "Etiqueta.pdf"
+    generar_etiqueta(_direccion,_altura,_barrio,_ciudad,_nombre,_apellido,_nro_telefono,_torre_monoblock,_piso,_departamento,_manzana,_casa_lote,_entre_calles,archivo_etiqueta)
+    import platform
+    if format(platform.system()) == "Linux":
+        pr=os.popen("lpr", "w") 
+        pr.write(archivo_etiqueta)
+        pr.close()
+    else:
+        os.startfile(archivo_etiqueta,"print")
+
+def generar_nro_remito(_verificacion):
+    if len(_verificacion[0]) < 10:
+        remito = "SG-0000000000" + str(len(_verificacion[0]))
+    elif len(_verificacion[0]) < 100:
+        remito = "SG-000000000" + str(len(_verificacion[0]))
+    elif len(_verificacion[0]) < 1000:
+        remito = "SG-00000000" + str(len(_verificacion[0]))
+    elif len(_verificacion[0]) < 10000:
+        remito = "SG-0000000" + str(len(_verificacion[0]))
+    elif len(_verificacion[0]) < 100000:
+        remito = "SG-000000" + str(len(_verificacion[0]))
+    elif len(_verificacion[0]) < 1000000:
+        remito = "SG-00000" + str(len(_verificacion[0]))
+    elif len(_verificacion[0]) < 10000000:
+        remito = "SG-0000" + str(len(_verificacion[0]))
+    elif len(_verificacion[0]) < 100000000:
+        remito = "SG-000" + str(len(_verificacion[0]))
+    elif len(_verificacion[0]) < 1000000000:
+        remito = "SG-00" + str(len(_verificacion[0]))
+    elif len(_verificacion[0]) < 10000000000:
+        remito = "SG-0" + str(len(_verificacion[0]))
+    elif len(_verificacion[0]) < 100000000000:
+        remito = "SG-" + str(len(_verificacion[0]))
+    return remito  
+
+def aviso_repetido(_nro_telefono_,_x_):
+    playsound("sonidos/ok.mp3")
+    print(f"   {_nro_telefono_} ya existe")
+    print(f"{_x_[0]}          {_x_[1]} {_x_[2]}")
+    print("""
+            SI - Para cargar un nuevo envio
+            enter - Para omitir
+            
+            """)
+    opcion = input()
+    return(opcion)
