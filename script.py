@@ -36,7 +36,7 @@ def df_a_lista(data):
 #genera un exel de Gsolutions con los viajes del dia
 def escribir_ruta_hoy(nombre_archivo):
     midb = connect_db()
-    pd.read_sql('SELECT * FROM GSolutions where fecha_despacho = current_date()',midb).to_excel(f'{nombre_archivo}')
+    pd.read_sql('SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho = current_date()',midb).to_excel(f'{nombre_archivo}')
 
 #envia un correo con las asignaciones 
 # y estado actual del dia en curso
@@ -258,7 +258,7 @@ def generar_nro_remito(_verificacion):
     return remito  
 
 def aviso_repetido(_nro_telefono_,_x_):
-    playsound("sonidos/ok.mp3")
+    #playsound("sonidos/ok.mp3")
     print(f"   {_nro_telefono_} ya existe")
     print(f"{_x_[0]}          {_x_[1]} {_x_[2]}")
     print("""

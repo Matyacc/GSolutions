@@ -10,7 +10,7 @@ def menu():
     menuprint = """
             1-Subir nuevo archivo
 
-            3-Enviar correo de asignaciones (HOY)
+            2-Enviar correo de asignaciones (HOY)
             3-Enviar correo con estado de entregas (HOY)
             4-Enviar correo con resumen de un dia determinado
 
@@ -27,7 +27,7 @@ def menu():
         if opcion == "1":
             archivo = f"planillas_originales/PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}-MMS.xlsx"
             subir_archivo(archivo)
-            playsound("sonidos/error.mp3")
+            #playsound("sonidos/error.mp3")
         #envia Correo con asignaciones de chip
         elif opcion == "2":
             asignaciones = f"PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}.xlsx"
@@ -42,12 +42,12 @@ def menu():
             dia = input("ingrese el dia: ")
             mes = input("ingrese el mes: ")
             año = input("ingrese el año: ")
-            fecha = f"{año}-{mes}-{dia}"
-            _archivo = f"PLANILLA GLOBAL {fecha}.xlsx"
+            fecha = f"{dia}-{mes}-{año}"
+            archivo = f"PLANILLA GLOBAL {fecha}.xlsx"
             asunto = f"Resumen del {dia}-{mes}-{año}"
             midb = connect_db()
-            pd.read_sql(f'SELECT * FROM GSolutions where fecha_despacho ="{fecha}"',midb).to_excel(f"descargas/{_archivo}")
-            enviar_correo(["logistica@gsolutions.com.ar"],asunto,_archivo)
+            pd.read_sql(f'SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho ="{fecha}"',midb).to_excel(f"descargas/{archivo}")
+            enviar_correo(["logistica@gsolutions.com.ar"],asunto,f"descargas/{archivo}")
         elif opcion.lower() == "descargar todo":
             archivo = input("Introdusca nombre de archivo: ")
             midb = connect_db()
