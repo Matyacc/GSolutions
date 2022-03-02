@@ -5,7 +5,7 @@ def connect_db():
     host="190.228.29.62",
     user="matyacc2",
     password="Agustin_1504",
-    database="test-mmspack-almagro"
+    database="mmspack-almagro"
     )
     return midb
 
