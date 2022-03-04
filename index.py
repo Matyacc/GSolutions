@@ -5,7 +5,6 @@ from script import (escribir_ruta_hoy, subir_archivo,
                     dia_actual, mes_actual, año_actual, 
                     enviar_correo, borrar_hoy)
 
-
 def menu():
     menuprint = """
             1-Subir nuevo archivo
@@ -27,7 +26,10 @@ def menu():
         if opcion == "1":
             archivo = f"planillas_originales/PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}-MMS.xlsx"
             subir_archivo(archivo)
-            #playsound("sonidos/error.mp3")
+            try:
+                playsound("sonidos/fin.mp3")
+            except:
+                print("¡se produjo un error al intentar reproducir el sonido!")
         #envia Correo con asignaciones de chip
         elif opcion == "2":
             asignaciones = f"PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}.xlsx"
@@ -43,11 +45,16 @@ def menu():
             mes = input("ingrese el mes: ")
             año = input("ingrese el año: ")
             fecha = f"{dia}-{mes}-{año}"
+            fecha_db = f"{año}-{mes}-{dia}"
             archivo = f"PLANILLA GLOBAL {fecha}.xlsx"
             asunto = f"Resumen del {dia}-{mes}-{año}"
             midb = connect_db()
-            pd.read_sql(f'SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho ="{fecha}"',midb).to_excel(f"descargas/{archivo}")
-            enviar_correo(["logistica@gsolutions.com.ar"],asunto,f"descargas/{archivo}")
+            pd.read_sql(f'SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho ="{fecha_db}"',midb).to_excel(f"descargas/{archivo}")
+            enviar_correo(["logistica@gsolutions.com.ar"],asunto,archivo)
+        elif opcion == "5":
+            archivo = f"descargas/PLANILLA GLOBAL.xlsx"
+            midb = connect_db()
+            pd.read_sql(f'SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho =current_date()',midb).to_excel(archivo)
         elif opcion.lower() == "descargar todo":
             archivo = input("Introdusca nombre de archivo: ")
             midb = connect_db()

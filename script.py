@@ -36,13 +36,11 @@ def df_a_lista(data):
 #genera un exel de Gsolutions con los viajes del dia
 def escribir_ruta_hoy(nombre_archivo):
     midb = connect_db()
-    pd.read_sql('SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho = current_date()',midb).to_excel(f'{nombre_archivo}')
+    pd.read_sql('SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho = current_date()',midb).to_excel(f'descargas/{nombre_archivo}')
 
 #envia un correo con las asignaciones 
 # y estado actual del dia en curso
 def enviar_correo(destinos,mensaje_asunto,adjunto):
-    """Se deben agregar 3 parametros: destinos, asunto y archivo adjunto
-        si los destinos son mas de uno tiene que ponerse en forma de lista"""
     remitente = 'mmspackcheck@gmail.com'
     destinatarios = destinos
     asunto = mensaje_asunto
@@ -54,7 +52,7 @@ def enviar_correo(destinos,mensaje_asunto,adjunto):
     mensaje['To'] = ", ".join(destinatarios)
     mensaje['Subject'] = asunto
     mensaje.attach(MIMEText(cuerpo, 'plain'))
-    archivo_adjunto = open(ruta_adjunto, 'rb')
+    archivo_adjunto = open(f"descargas/"+ruta_adjunto, 'rb')
     adjunto_MIME = MIMEBase('application', 'octet-stream')
     adjunto_MIME.set_payload((archivo_adjunto).read())
     encoders.encode_base64(adjunto_MIME)
@@ -191,7 +189,6 @@ def subir_archivo(nombre_archivo):
                 pedido_confirmado(remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entre_calles,referencia,usuario_logistica,db,verificacion)
             else:
                 print("pedido omitido")
-                pass
         else:
             pedido_confirmado(remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,db,verificacion)
     db.close()
@@ -206,6 +203,7 @@ def consulta_repetido(_nro_telefono,_db):
             opcion = "si"
         else:
             opcion = aviso_repetido(_nro_telefono,x)
+            
     elif len(resultado) > 1:
         lista_fechas = []
         for x in resultado:
@@ -258,7 +256,10 @@ def generar_nro_remito(_verificacion):
     return remito  
 
 def aviso_repetido(_nro_telefono_,_x_):
-    #playsound("sonidos/ok.mp3")
+    try:
+        playsound("sonidos/ok.mp3")
+    except:
+        print("¡se produjo un error al intentar reproducir el sonido!")
     print(f"   {_nro_telefono_} ya existe")
     print(f"{_x_[0]}          {_x_[1]} {_x_[2]}")
     print("""
