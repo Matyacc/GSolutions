@@ -156,7 +156,11 @@ def subir_archivo(nombre_archivo):
     db = connect_db()
     verificacion = verificar_si_existe(db)
     contenidoArchivo = exel_a_lista(nombre_archivo,"Hoja1")
-    
+    total_sobres = len(contenidoArchivo)
+    print(f"Son {total_sobres} sobres")
+    cant_direcciones = 0
+    direccion_anterior = ""
+    contador = 0
     for pedido in contenidoArchivo:
         remito = generar_nro_remito(verificacion)
         # obtengo los datos de el epedidoel accediendo por posicion
@@ -182,6 +186,11 @@ def subir_archivo(nombre_archivo):
         entre_calles = pedido[19]
         referencia = pedido[20]
         usuario_logistica = "MMS PACK"
+        if direccion_anterior == f"{direccion} {altura}":
+            cant_direcciones = cant_direcciones
+        else:
+            cant_direcciones += 1
+        direccion_anterior = f"{direccion} {altura}"
 
         if str(nro_telefono) in str(verificacion[1]):
             opcion = consulta_repetido(nro_telefono,db)
@@ -191,6 +200,9 @@ def subir_archivo(nombre_archivo):
                 print("pedido omitido")
         else:
             pedido_confirmado(remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,db,verificacion)
+        contador += 1
+        print(f"{contador} de {total_sobres}")
+    print(f"En total son {cant_direcciones}")
     db.close()
 
 def consulta_repetido(_nro_telefono,_db):
