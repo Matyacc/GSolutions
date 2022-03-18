@@ -230,6 +230,8 @@ def pedido_confirmado(_remito,_nro_telefono,_envios,_nombre,_apellido,_dni,_prov
     _verificacion[0].append(_remito)
     _verificacion[1].append(_nro_telefono)
     _sim = input("Scanner: ")
+    while len(_sim) != 19
+        _sim = input("Scanner: ")
     insert_pedido(_sim,_remito,_nro_telefono,_envios,_nombre,_apellido,_dni,_provincia,_ciudad,_cp,_direccion,_altura,_torre_monoblock,_piso,_departamento,_manzana,_casa_lote,_barrio,_entre_calles,_referencia,_usuario_logistica,_db)
     print(f"Nuevo registro agregado: {_nro_telefono}")
     archivo_etiqueta = "Etiqueta.pdf"
