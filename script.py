@@ -167,6 +167,7 @@ def subir_archivo(nombre_archivo):
         # arranca en cero la fila A       
         nro_telefono = pedido[3]
         envios = pedido[4]
+        if envios != 1 or envios != 0: envios = 1 #<-----Arreglo
         nombre = pedido[5]
         apellido = pedido[6]
         dni = pedido[7]
@@ -230,7 +231,7 @@ def pedido_confirmado(_remito,_nro_telefono,_envios,_nombre,_apellido,_dni,_prov
     _verificacion[0].append(_remito)
     _verificacion[1].append(_nro_telefono)
     _sim = input("Scanner: ")
-    while len(_sim) != 19
+    while len(_sim) != 19:
         _sim = input("Scanner: ")
     insert_pedido(_sim,_remito,_nro_telefono,_envios,_nombre,_apellido,_dni,_provincia,_ciudad,_cp,_direccion,_altura,_torre_monoblock,_piso,_departamento,_manzana,_casa_lote,_barrio,_entre_calles,_referencia,_usuario_logistica,_db)
     print(f"Nuevo registro agregado: {_nro_telefono}")

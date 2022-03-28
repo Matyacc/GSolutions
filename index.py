@@ -1,7 +1,7 @@
 import pandas as pd
 from database import connect_db
 from playsound import playsound
-from script import (escribir_ruta_hoy, subir_archivo, 
+from script import (escribir_ruta_hoy, generar_etiqueta, subir_archivo, 
                     dia_actual, mes_actual, año_actual, 
                     enviar_correo, borrar_hoy)
 
@@ -15,6 +15,7 @@ def menu():
 
             Comandos especiales:
 
+            "imprimir etiqueta" /   reimprimir una etiqueta
             "Descargar todo"    /   Descargar archivo con todos los viajes
             "Resetear dia"      /   Para borrar el dia actual escriba  
             "Fin"               /   para salir
@@ -65,6 +66,25 @@ def menu():
         elif opcion.lower() == "resetear dia":
             borrar_hoy()
             print("Todos los registros de hoy fueron eliminados")
+        elif opcion.lower() == "imprimir etiqueta":
+            sim = input("SCANNER: ")
+            while sim != "fin":
+                midb = connect_db()
+                cursor = midb.cursor()
+                cursor.execute(f"SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where sim = '" + sim + "';")
+                resultado = cursor.fetchone()
+                print(resultado)
+                archivo_reimprimir_etiqueta = "etiqueta_reimpresa.pdf"
+                generar_etiqueta(resultado[11],resultado[12],resultado[18],resultado[9],resultado[5],resultado[6],resultado[3],resultado[13],resultado[14],resultado[15],resultado[16],resultado[17],resultado[18],archivo_reimprimir_etiqueta)
+                import platform
+                import os
+                if format(platform.system()) == "Linux":
+                    pr=os.popen("lpr", "w") 
+                    pr.write(archivo_reimprimir_etiqueta)
+                    pr.close()
+                else:
+                    os.startfile(archivo_reimprimir_etiqueta,"print")
+                sim = input("SCANNER: ")
         else:
             print("opcion incorrecta")
         print(menuprint)
