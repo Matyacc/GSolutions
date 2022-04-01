@@ -167,7 +167,7 @@ def subir_archivo(nombre_archivo):
         # arranca en cero la fila A       
         nro_telefono = pedido[3]
         envios = pedido[4]
-        if envios != 1 or envios != 0: envios = 1 #<-----Arreglo
+        if str(envios) != "1" and str(envios) != "0": envios = 1 #<-----Arreglo
         nombre = pedido[5]
         apellido = pedido[6]
         dni = pedido[7]
