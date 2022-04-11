@@ -10,6 +10,10 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import personalizado
 from database import connect_db
 import os
+from reportlab.pdfgen import canvas
+from reportlab.graphics.barcode import code39
+from reportlab.lib.units import mm
+
 
 ahora = (datetime.today())
 fecha_hoy = str(ahora)[0:10]
@@ -64,6 +68,7 @@ def enviar_correo(destinos,mensaje_asunto,adjunto):
     texto = mensaje.as_string()
     sesion_smtp.sendmail(remitente, destinatarios, texto)
     sesion_smtp.quit()
+
 
 #verifica si existe el nro de telefono y 
 # el nro de remito en la base de datos

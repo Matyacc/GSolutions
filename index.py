@@ -25,11 +25,11 @@ def menu():
     opcion = input()
     while opcion.lower() != "fin":
         if opcion == "1":
-            try:
-                archivo = f"C:/Users/Mi pc/Downloads/PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}-MMS.xlsx"
-                subir_archivo(archivo)
-            except:
-                print("No se encuentra el archivo en Descargas")
+            #try:
+            archivo = f"C:/Users/Mi pc/Downloads/PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}-MMS.xlsx"
+            subir_archivo(archivo)
+            #except:
+            #    print("No se encuentra el archivo en Descargas")
             try:
                 playsound("sonidos/fin.mp3")
             except:
