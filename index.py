@@ -1,7 +1,7 @@
 import pandas as pd
 from database import connect_db
 from playsound import playsound
-from script import (escribir_ruta_hoy, generar_etiqueta, subir_archivo, 
+from script import (buscador_remito, escribir_ruta_hoy, generar_etiqueta, subir_archivo, 
                     dia_actual, mes_actual, año_actual, 
                     enviar_correo, borrar_hoy)
 
@@ -14,7 +14,7 @@ def menu():
             4-Enviar correo con resumen de un dia determinado
 
             Comandos especiales:
-
+            "buscar"            /   Buscar un envio por remito
             "imprimir etiqueta" /   reimprimir una etiqueta
             "Descargar todo"    /   Descargar archivo con todos los viajes
             "Resetear dia"      /   Para borrar el dia actual escriba  
@@ -25,13 +25,15 @@ def menu():
     opcion = input()
     while opcion.lower() != "fin":
         if opcion == "1":
-            #try:
-            archivo = f"C:/Users/Mi pc/Downloads/PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}-MMS.xlsx"
-            subir_archivo(archivo)
-            #except:
-            #    print("No se encuentra el archivo en Descargas")
             try:
-                playsound("sonidos/fin.mp3")
+                archivo = f"C:/Users/Mi pc/Downloads/PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}-MMS.xlsx"
+                subir_archivo(archivo)
+            except:
+                print("No se encuentra el archivo en Descargas")
+                opcion = input()
+                continue
+            try:
+                playsound("sonidos\bombon-asesino.mp3")
             except:
                 print("¡se produjo un error al intentar reproducir el sonido!")
         #envia Correo con asignaciones de chip
@@ -61,6 +63,10 @@ def menu():
             midb = connect_db()
             pd.read_sql(f'SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho =current_date()',midb).to_excel(archivo)
             midb.close()
+        elif opcion.lower() == "buscar":
+            rem = input("Ingrese numero de remito")
+            midbbuscador = connect_db()
+            buscador_remito(midbbuscador,rem)
         elif opcion.lower() == "descargar todo":
             archivo = input("Introdusca nombre de archivo: ")
             midb = connect_db()

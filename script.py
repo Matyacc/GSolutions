@@ -11,19 +11,13 @@ from reportlab.lib.pagesizes import personalizado
 from database import connect_db
 import os
 from reportlab.pdfgen import canvas
-from reportlab.graphics.barcode import code39
-from reportlab.lib.units import mm
-
 
 ahora = (datetime.today())
 fecha_hoy = str(ahora)[0:10]
 dia_actual = fecha_hoy[8:10]
 mes_actual = fecha_hoy[5:7]
 año_actual = fecha_hoy[0:4]
-print(dia_actual+"-"+mes_actual+"-"+año_actual)
 
-
-#convierte las filas de un exel en una lista de datos
 def exel_a_lista(nombre_archivo,nombre_hoja):
     data = pd.read_excel(nombre_archivo,sheet_name=nombre_hoja, skiprows=0)
     lista_filtrada = data.fillna("")
@@ -42,8 +36,6 @@ def escribir_ruta_hoy(nombre_archivo):
     midb = connect_db()
     pd.read_sql('SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho = current_date()',midb).to_excel(f'descargas/{nombre_archivo}')
 
-#envia un correo con las asignaciones 
-# y estado actual del dia en curso
 def enviar_correo(destinos,mensaje_asunto,adjunto):
     remitente = 'mmspackcheck@gmail.com'
     destinatarios = destinos
@@ -69,9 +61,7 @@ def enviar_correo(destinos,mensaje_asunto,adjunto):
     sesion_smtp.sendmail(remitente, destinatarios, texto)
     sesion_smtp.quit()
 
-
-#verifica si existe el nro de telefono y 
-# el nro de remito en la base de datos
+#verifica si existe el nro de telefono y el nro de remito en la base de datos
 def verificar_si_existe(midb):
     cursor = midb.cursor()
     lista_remito = []
@@ -83,7 +73,20 @@ def verificar_si_existe(midb):
         lista_telefono.append(x[1])
     print(len(lista_remito))
     return [lista_remito, lista_telefono]
-   
+
+def buscador_remito(midb,remito):
+    cursor = midb.cursor()
+    cursor.execute("select fecha_despacho, remito, direccion, altura, chofer, estado from GSolutions where remito like '%"+remito+"%'")
+    resultado = cursor.fetchone()
+    fecha = str(resultado[0])
+    fecha = f"{fecha[7:9]}{fecha[4:7]}-{fecha[0:4]}"
+    remito = resultado[1]
+    direccion = f"{resultado[2]} {resultado[3]}"
+    chofer = str(resultado[4])
+    estado = str(resultado[5])
+    resultado = f"{fecha} {remito} {direccion} {chofer} {estado}"
+    print(resultado)
+ 
 def generar_etiqueta(_direccion, _altura,_barrio,_ciudad,_nombre,_apellido,_nro_telefono, _torre_monoblock, _piso, _dpto,_manzana, _casa_lote, _entre_calles, _archivo):
     infodir = f"{_direccion} {_altura}"
     infobarrio = f"E/ {_entre_calles}"
@@ -277,7 +280,7 @@ def generar_nro_remito(_verificacion):
 
 def aviso_repetido(_nro_telefono_,_x_):
     try:
-        playsound("sonidos/ok.mp3")
+        playsound("sonidos\ok.mp3")
     except:
         print("¡se produjo un error al intentar reproducir el sonido!")
     print(f"   {_nro_telefono_} ya existe")
