@@ -5,18 +5,29 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
-from playsound import playsound
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import personalizado
 from database import connect_db
 import os
 from reportlab.pdfgen import canvas
 
-ahora = (datetime.today())
-fecha_hoy = str(ahora)[0:10]
-dia_actual = fecha_hoy[8:10]
-mes_actual = fecha_hoy[5:7]
-año_actual = fecha_hoy[0:4]
+def ahora():
+    ahora = (datetime.today())
+    fecha_hoy = str(ahora)[0:10]
+    dia_actual = fecha_hoy[8:10]
+    mes_actual = fecha_hoy[5:7]
+    año_actual = fecha_hoy[0:4]
+    return dia_actual,mes_actual,año_actual,fecha_hoy
+
+
+def limpiarConsola():
+    import os
+    import platform
+    if format(platform.system()) == "Windows":
+        os.system("cls")
+    elif format(platform.system()) == "Linux":
+        os.system("clear")
+
 
 def exel_a_lista(nombre_archivo,nombre_hoja):
     data = pd.read_excel(nombre_archivo,sheet_name=nombre_hoja, skiprows=0)
@@ -32,12 +43,12 @@ def df_a_lista(data):
     return lista_data
 
 #genera un exel de Gsolutions con los viajes del dia
-def escribir_ruta_hoy(nombre_archivo):
+def escribir_exel(nombre_archivo,fechaConsulta):
     midb = connect_db()
-    pd.read_sql('SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho = current_date()',midb).to_excel(f'descargas/{nombre_archivo}')
+    pd.read_sql('SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho = ' + fechaConsulta,midb).to_excel(f'descargas/{nombre_archivo}')
 
 def enviar_correo(destinos,mensaje_asunto,adjunto):
-    remitente = 'mmspackcheck@gmail.com'
+    remitente = 'mmspackcheck.informes@gmail.com'
     destinatarios = destinos
     asunto = mensaje_asunto
     cuerpo = ""
@@ -56,7 +67,7 @@ def enviar_correo(destinos,mensaje_asunto,adjunto):
     mensaje.attach(adjunto_MIME)
     sesion_smtp = smtplib.SMTP('smtp.gmail.com', 587)
     sesion_smtp.starttls()
-    sesion_smtp.login('mmspackcheck@gmail.com','abcd1234IMPO')
+    sesion_smtp.login('mmspackcheck.informes@gmail.com','vhyrdmvmfpvdgyes')
     texto = mensaje.as_string()
     sesion_smtp.sendmail(remitente, destinatarios, texto)
     sesion_smtp.quit()
@@ -79,7 +90,7 @@ def buscador_remito(midb,remito):
     cursor.execute("select fecha_despacho, remito, direccion, altura, chofer, estado from GSolutions where remito like '%"+remito+"%'")
     resultado = cursor.fetchone()
     fecha = str(resultado[0])
-    fecha = f"{fecha[7:9]}{fecha[4:7]}-{fecha[0:4]}"
+    fecha = f"{fecha[8:10]}{fecha[4:7]}-{fecha[0:4]}"
     remito = resultado[1]
     direccion = f"{resultado[2]} {resultado[3]}"
     chofer = str(resultado[4])
@@ -144,23 +155,17 @@ def verificar_conexion(midb):
             print("Error en la coneccion")
     return midb
 
-def insert_pedido(codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,usuario_logistica,midb):
+def insert_pedido(codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha,usuario_logistica,midb):
     db = verificar_conexion(midb)
     cursor = db.cursor()
     sql = "insert into GSolutions (sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-    values = (codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_hoy,usuario_logistica,)
+    values = (codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha,usuario_logistica,)
     cursor.execute(sql,values)
     db.commit()
 
-def borrar_hoy():
-    midb = connect_db()
-    cursor = midb.cursor()
-    sql = "delete from GSolutions where fecha_despacho = %s"
-    values = (f"{año_actual}-{mes_actual}-{dia_actual}",)
-    cursor.execute(sql,values)
-    midb.commit()
 
 def subir_archivo(nombre_archivo):
+    dia_actual,mes_actual,año_actual,fechaHoy = ahora()
     db = connect_db()
     verificacion = verificar_si_existe(db)
     contenidoArchivo = exel_a_lista(nombre_archivo,"Hoja1")
@@ -202,25 +207,28 @@ def subir_archivo(nombre_archivo):
         direccion_anterior = f"{direccion} {altura}"
 
         if str(nro_telefono) in str(verificacion[1]):
-            opcion = consulta_repetido(nro_telefono,db)
+            opcion = consulta_repetido(nro_telefono,fechaHoy,db)
             if opcion.lower() == "si":
-                pedido_confirmado(remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entre_calles,referencia,usuario_logistica,db,verificacion)
+                pedido_confirmado(remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entre_calles,referencia,fechaHoy,usuario_logistica,db,verificacion)
             else:
                 print("pedido omitido")
         else:
-            pedido_confirmado(remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia, usuario_logistica,db,verificacion)
+            pedido_confirmado(remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote, barrio, entre_calles, referencia,fechaHoy,usuario_logistica,db,verificacion)
         contador += 1
         print(f"{contador} de {total_sobres}")
-    print(f"En total son {cant_direcciones}")
+    print(f"En total son {cant_direcciones} direcciones")
+    asignaciones = f"PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}.xlsx"
+    escribir_exel(asignaciones,"current_date()")
+    enviar_correo(["logistica@gsolutions.com.ar"],"Asignación",asignaciones)
     db.close()
 
-def consulta_repetido(_nro_telefono,_db):
+def consulta_repetido(_nro_telefono,fecha,_db):
     cursor = _db.cursor()
     cursor.execute(f"select fecha_despacho, direccion, altura from GSolutions where nro_telefono = {int(_nro_telefono)}")
     resultado = cursor.fetchall()
     if len(resultado) == 1:
         x = resultado[0]
-        if str(x[0]) != str(fecha_hoy):
+        if str(x[0]) != str(fecha):
             opcion = "si"
         else:
             opcion = aviso_repetido(_nro_telefono,x)
@@ -229,19 +237,19 @@ def consulta_repetido(_nro_telefono,_db):
         lista_fechas = []
         for x in resultado:
             lista_fechas.append(str(x[0]))
-        if str(fecha_hoy) not in str(lista_fechas):
+        if str(fecha) not in str(lista_fechas):
             opcion = "si"
         else:
             opcion = aviso_repetido(_nro_telefono,x)
     return opcion
 
-def pedido_confirmado(_remito,_nro_telefono,_envios,_nombre,_apellido,_dni,_provincia,_ciudad,_cp,_direccion,_altura,_torre_monoblock,_piso,_departamento,_manzana,_casa_lote,_barrio,_entre_calles,_referencia,_usuario_logistica,_db,_verificacion):
+def pedido_confirmado(_remito,_nro_telefono,_envios,_nombre,_apellido,_dni,_provincia,_ciudad,_cp,_direccion,_altura,_torre_monoblock,_piso,_departamento,_manzana,_casa_lote,_barrio,_entre_calles,_referencia,fecha,_usuario_logistica,_db,_verificacion):
     _verificacion[0].append(_remito)
     _verificacion[1].append(_nro_telefono)
-    _sim = input("Scanner: ")
-    while len(_sim) != 19:
+    _sim = input("Scanner: ") + "'"
+    while len(_sim) != 20:
         _sim = input("Scanner: ")
-    insert_pedido(_sim,_remito,_nro_telefono,_envios,_nombre,_apellido,_dni,_provincia,_ciudad,_cp,_direccion,_altura,_torre_monoblock,_piso,_departamento,_manzana,_casa_lote,_barrio,_entre_calles,_referencia,_usuario_logistica,_db)
+    insert_pedido(_sim,_remito,_nro_telefono,_envios,_nombre,_apellido,_dni,_provincia,_ciudad,_cp,_direccion,_altura,_torre_monoblock,_piso,_departamento,_manzana,_casa_lote,_barrio,_entre_calles,_referencia,fecha,_usuario_logistica,_db)
     print(f"Nuevo registro agregado: {_nro_telefono}")
     archivo_etiqueta = "Etiqueta.pdf"
     generar_etiqueta(_direccion,_altura,_barrio,_ciudad,_nombre,_apellido,_nro_telefono,_torre_monoblock,_piso,_departamento,_manzana,_casa_lote,_entre_calles,archivo_etiqueta)
@@ -279,10 +287,6 @@ def generar_nro_remito(_verificacion):
     return remito  
 
 def aviso_repetido(_nro_telefono_,_x_):
-    try:
-        playsound("sonidos\ok.mp3")
-    except:
-        print("¡se produjo un error al intentar reproducir el sonido!")
     print(f"   {_nro_telefono_} ya existe")
     print(f"{_x_[0]}          {_x_[1]} {_x_[2]}")
     print("""
