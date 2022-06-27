@@ -217,9 +217,9 @@ def subir_archivo(nombre_archivo):
         contador += 1
         print(f"{contador} de {total_sobres}")
     print(f"En total son {cant_direcciones} direcciones")
-    asignaciones = f"PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}.xlsx"
-    escribir_exel(asignaciones,"current_date()")
-    enviar_correo(["logistica@gsolutions.com.ar"],"Asignación",asignaciones)
+    # asignaciones = f"PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}.xlsx"
+    # escribir_exel(asignaciones,"current_date()")
+    # enviar_correo(["logistica@gsolutions.com.ar"],"Asignación",asignaciones)
     db.close()
 
 def consulta_repetido(_nro_telefono,fecha,_db):
@@ -248,6 +248,7 @@ def pedido_confirmado(_remito,_nro_telefono,_envios,_nombre,_apellido,_dni,_prov
     _verificacion[1].append(_nro_telefono)
     _sim = input("Scanner: ")
     while len(_sim) != 19:
+        print(len(_sim))
         _sim = input("Scanner: ")
     insert_pedido(_sim,_remito,_nro_telefono,_envios,_nombre,_apellido,_dni,_provincia,_ciudad,_cp,_direccion,_altura,_torre_monoblock,_piso,_departamento,_manzana,_casa_lote,_barrio,_entre_calles,_referencia,fecha,_usuario_logistica,_db)
     print(f"Nuevo registro agregado: {_nro_telefono}")
@@ -263,27 +264,27 @@ def pedido_confirmado(_remito,_nro_telefono,_envios,_nombre,_apellido,_dni,_prov
 
 def generar_nro_remito(_verificacion):
     if len(_verificacion[0]) < 10:
-        remito = "SG-0000000000" + str(len(_verificacion[0]))
+        remito = "SG-0000000000" + str(len(_verificacion[0])+10)
     elif len(_verificacion[0]) < 100:
-        remito = "SG-000000000" + str(len(_verificacion[0]))
+        remito = "SG-000000000" + str(len(_verificacion[0])+10)
     elif len(_verificacion[0]) < 1000:
-        remito = "SG-00000000" + str(len(_verificacion[0]))
+        remito = "SG-00000000" + str(len(_verificacion[0])+10)
     elif len(_verificacion[0]) < 10000:
-        remito = "SG-0000000" + str(len(_verificacion[0]))
+        remito = "SG-0000000" + str(len(_verificacion[0])+10)
     elif len(_verificacion[0]) < 100000:
-        remito = "SG-000000" + str(len(_verificacion[0]))
+        remito = "SG-000000" + str(len(_verificacion[0])+10)
     elif len(_verificacion[0]) < 1000000:
-        remito = "SG-00000" + str(len(_verificacion[0]))
+        remito = "SG-00000" + str(len(_verificacion[0])+10)
     elif len(_verificacion[0]) < 10000000:
-        remito = "SG-0000" + str(len(_verificacion[0]))
+        remito = "SG-0000" + str(len(_verificacion[0])+10)
     elif len(_verificacion[0]) < 100000000:
-        remito = "SG-000" + str(len(_verificacion[0]))
+        remito = "SG-000" + str(len(_verificacion[0])+10)
     elif len(_verificacion[0]) < 1000000000:
-        remito = "SG-00" + str(len(_verificacion[0]))
+        remito = "SG-00" + str(len(_verificacion[0])+10)
     elif len(_verificacion[0]) < 10000000000:
-        remito = "SG-0" + str(len(_verificacion[0]))
+        remito = "SG-0" + str(len(_verificacion[0])+10)
     elif len(_verificacion[0]) < 100000000000:
-        remito = "SG-" + str(len(_verificacion[0]))
+        remito = "SG-" + str(len(_verificacion[0])+10)
     return remito  
 
 def aviso_repetido(_nro_telefono_,_x_):
