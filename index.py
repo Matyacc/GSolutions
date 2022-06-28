@@ -1,4 +1,5 @@
 import os
+from sqlite3 import connect
 import pandas as pd
 from database import connect_db
 from script import buscador_remito, escribir_exel, generar_etiqueta, subir_archivo, ahora, enviar_correo,limpiarConsola
@@ -38,7 +39,8 @@ def menu():
         if opcion == "1":
             archivo = f'~/Downloads/PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}-MMS.xlsx'
             if os.path.isfile((os.path.expanduser(archivo))):
-                subir_archivo(archivo)
+                midb = connect_db()
+                subir_archivo(archivo,midb)
             else:
                 print("El archivo no se encuentra en descargas")
 

@@ -164,9 +164,9 @@ def insert_pedido(codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,p
     db.commit()
 
 
-def subir_archivo(nombre_archivo):
+def subir_archivo(nombre_archivo,db):
     dia_actual,mes_actual,año_actual,fechaHoy = ahora()
-    db = connect_db()
+    db = verificar_conexion(db)
     verificacion = verificar_si_existe(db)
     contenidoArchivo = exel_a_lista(nombre_archivo,"Hoja1")
     total_sobres = len(contenidoArchivo)
@@ -220,7 +220,6 @@ def subir_archivo(nombre_archivo):
     # asignaciones = f"PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}.xlsx"
     # escribir_exel(asignaciones,"current_date()")
     # enviar_correo(["logistica@gsolutions.com.ar"],"Asignación",asignaciones)
-    db.close()
 
 def consulta_repetido(_nro_telefono,fecha,_db):
     cursor = _db.cursor()
