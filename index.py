@@ -1,10 +1,8 @@
 import os
-from sqlite3 import connect
 import pandas as pd
-from database import connect_db
-from script import buscador_remito, escribir_exel, generar_etiqueta, subir_archivo, ahora, enviar_correo,limpiarConsola
-
-
+from database import connect_db, connect_db_hostinger
+from script import buscador_remito, escribir_exel, generar_etiqueta, subir_archivo, ahora, enviar_correo,limpiarConsola,actualizardB
+actualizardB(connect_db_hostinger(),connect_db())
 if not (os.path.isdir('descargas')):
     os.system("mkdir descargas")
 
@@ -41,6 +39,10 @@ def menu():
             if os.path.isfile((os.path.expanduser(archivo))):
                 midb = connect_db()
                 subir_archivo(archivo,midb)
+                actualizado = False
+                while actualizado != True:
+                    actualizado = actualizardB(connect_db(),connect_db_hostinger())
+
             else:
                 print("El archivo no se encuentra en descargas")
 
@@ -142,3 +144,4 @@ def menu():
         opcion = input()
 
 menu()
+actualizardB(connect_db(),connect_db_hostinger())

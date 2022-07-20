@@ -1,3 +1,4 @@
+from numpy import true_divide
 import pandas as pd
 from datetime import datetime
 import smtplib
@@ -7,7 +8,7 @@ from email.mime.base import MIMEBase
 from email import encoders
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import personalizado
-from database import connect_db
+from database import connect_db, connect_db_hostinger
 import os
 from reportlab.pdfgen import canvas
 
@@ -44,7 +45,7 @@ def df_a_lista(data):
 
 #genera un exel de Gsolutions con los viajes del dia
 def escribir_exel(nombre_archivo,fechaConsulta):
-    midb = connect_db()
+    midb = connect_db_hostinger()
     pd.read_sql('SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho = ' + fechaConsulta,midb).to_excel(f'descargas/{nombre_archivo}')
 
 def enviar_correo(destinos,mensaje_asunto,adjunto):
@@ -296,3 +297,42 @@ def aviso_repetido(_nro_telefono_,_x_):
             """)
     opcion = input()
     return(opcion)
+
+def actualizardB(dbConsulta,dbCarga):
+    """En el primer parametro se coloca la base de datos que esta actualizada
+        y en el segundo parametro se coloca la base de datos a actualizar"""
+    try:
+        listaDb = []
+        listaDbLocal = []
+        nroEnvioLocal = []
+        nroEnvioDB = []
+        cursordbConsulta = dbConsulta.cursor()
+        cursordbConsulta.execute("select * from GSolutions")
+        for x in cursordbConsulta.fetchall():
+            listaDb.append(x)
+            nroEnvioDB.append(x[2])
+        cursordbCarga = dbCarga.cursor()
+        cursordbCarga.execute("select * from GSolutions")
+        for y in cursordbCarga.fetchall():
+            listaDbLocal.append(y)
+            nroEnvioLocal.append(str(y[2]))
+        contador = -1
+        existe = False
+        for z in nroEnvioDB:
+            contador = contador +1
+            if str(z) in str(nroEnvioLocal):
+                existe = True
+            if existe == False:
+                try:
+                    viaje = listaDb[contador]
+                    sql = "insert into GSolutions (estado, sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                    values = viaje[0], viaje[1], viaje[2], viaje[3], viaje[4], viaje[5], viaje[6], viaje[7], viaje[8], viaje[9], viaje[10], viaje[11], viaje[12], viaje[13], viaje[14], viaje[15], viaje[16], viaje[17], viaje[18], viaje[19], viaje[20], viaje[21], viaje[22]
+                    cursordbCarga.execute(sql,values)
+                    dbCarga.commit()
+                except:
+                    print("Error en " + nroEnvioDB[contador])
+            existe = False
+        return True
+    except:
+        return False
+    
