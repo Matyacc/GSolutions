@@ -264,27 +264,27 @@ def pedido_confirmado(_remito,_nro_telefono,_envios,_nombre,_apellido,_dni,_prov
 
 def generar_nro_remito(_verificacion):
     if len(_verificacion[0]) < 10:
-        remito = "SG-0000000000" + str(len(_verificacion[0])+10)
+        remito = "SG-0000000000" + str(len(_verificacion[0])+20)
     elif len(_verificacion[0]) < 100:
-        remito = "SG-000000000" + str(len(_verificacion[0])+10)
+        remito = "SG-000000000" + str(len(_verificacion[0])+20)
     elif len(_verificacion[0]) < 1000:
-        remito = "SG-00000000" + str(len(_verificacion[0])+10)
+        remito = "SG-00000000" + str(len(_verificacion[0])+20)
     elif len(_verificacion[0]) < 10000:
-        remito = "SG-0000000" + str(len(_verificacion[0])+10)
+        remito = "SG-0000000" + str(len(_verificacion[0])+20)
     elif len(_verificacion[0]) < 100000:
-        remito = "SG-000000" + str(len(_verificacion[0])+10)
+        remito = "SG-000000" + str(len(_verificacion[0])+20)
     elif len(_verificacion[0]) < 1000000:
-        remito = "SG-00000" + str(len(_verificacion[0])+10)
+        remito = "SG-00000" + str(len(_verificacion[0])+20)
     elif len(_verificacion[0]) < 10000000:
-        remito = "SG-0000" + str(len(_verificacion[0])+10)
+        remito = "SG-0000" + str(len(_verificacion[0])+20)
     elif len(_verificacion[0]) < 100000000:
-        remito = "SG-000" + str(len(_verificacion[0])+10)
+        remito = "SG-000" + str(len(_verificacion[0])+20)
     elif len(_verificacion[0]) < 1000000000:
-        remito = "SG-00" + str(len(_verificacion[0])+10)
+        remito = "SG-00" + str(len(_verificacion[0])+20)
     elif len(_verificacion[0]) < 10000000000:
-        remito = "SG-0" + str(len(_verificacion[0])+10)
+        remito = "SG-0" + str(len(_verificacion[0])+20)
     elif len(_verificacion[0]) < 100000000000:
-        remito = "SG-" + str(len(_verificacion[0])+10)
+        remito = "SG-" + str(len(_verificacion[0])+20)
     return remito  
 
 def aviso_repetido(_nro_telefono_,_x_):
