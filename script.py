@@ -1,4 +1,3 @@
-from numpy import true_divide
 import pandas as pd
 from datetime import datetime
 import smtplib
@@ -8,9 +7,10 @@ from email.mime.base import MIMEBase
 from email import encoders
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import personalizado
-from database import connect_db, connect_db_hostinger
+from database import connect_db, connect_db_hostinger,verificar_conexion
 import os
 from reportlab.pdfgen import canvas
+import time
 
 def ahora():
     ahora = (datetime.today())
@@ -44,10 +44,12 @@ def df_a_lista(data):
     return lista_data
 
 #genera un exel de Gsolutions con los viajes del dia
-def escribir_exel(nombre_archivo,fechaConsulta):
+def escribir_exel(nombre_archivo,fechaConsulta,_vendedor):
     midb = connect_db_hostinger()
-    pd.read_sql('SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho = ' + fechaConsulta,midb).to_excel(f'descargas/{nombre_archivo}')
-
+    pd.read_sql(f'SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,"BUENOS AIRES",ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho = {fechaConsulta} and provincia = "{_vendedor}"',midb).to_excel(f'descargas/{nombre_archivo}')
+def escribir_exel_desde_local(nombre_archivo,fechaConsulta,_vendedor):
+    midb = connect_db()
+    pd.read_sql(f'SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,"BUENOS AIRES",ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho = {fechaConsulta} and provincia = "{_vendedor}"',midb).to_excel(f'descargas/{nombre_archivo}')
 def enviar_correo(destinos,mensaje_asunto,adjunto):
     remitente = 'mmspackcheck.informes@gmail.com'
     destinatarios = destinos
@@ -144,17 +146,7 @@ def generar_etiqueta(_direccion, _altura,_barrio,_ciudad,_nombre,_apellido,_nro_
     c.drawString(5, 10,str(localidad))
     c.save()
     
-def verificar_conexion(midb):
-    if midb.is_connected() == False:
-        print("Reconectando base de datos")
-    while midb.is_connected() == False:
-        try:
-            midb = connect_db()
-            conexion = midb.is_connected()
-            print("Conexion exitosa")
-        except:
-            print("Error en la coneccion")
-    return midb
+
 
 def insert_pedido(codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha,usuario_logistica,midb):
     db = verificar_conexion(midb)
@@ -165,7 +157,7 @@ def insert_pedido(codigo_sim,nro_envio,nro_telefono,envios,nombre,apellido,dni,p
     db.commit()
 
 
-def subir_archivo(nombre_archivo,db):
+def subir_archivo(nombre_archivo,db,_vendedor):
     dia_actual,mes_actual,año_actual,fechaHoy = ahora()
     db = verificar_conexion(db)
     verificacion = verificar_si_existe(db)
@@ -185,7 +177,7 @@ def subir_archivo(nombre_archivo,db):
         nombre = pedido[5]
         apellido = pedido[6]
         dni = pedido[7]
-        provincia = pedido[8]
+        provincia = _vendedor
         ciudad = pedido[9].lower()
         if "caba" in ciudad or "capital federal" in ciudad or "ciudad de buenos aires" in ciudad or "capital federal (caba)" in ciudad or "ciudad autonoma de buenos aires" in ciudad or "c.a.b.a" in ciudad or "capital" in ciudad: ciudad = "CABA"
         cp = pedido[10]
@@ -264,27 +256,27 @@ def pedido_confirmado(_remito,_nro_telefono,_envios,_nombre,_apellido,_dni,_prov
 
 def generar_nro_remito(_verificacion):
     if len(_verificacion[0]) < 10:
-        remito = "SG-0000000000" + str(len(_verificacion[0])+20)
+        remito = "SG-0000000000" + str(len(_verificacion[0])+26)
     elif len(_verificacion[0]) < 100:
-        remito = "SG-000000000" + str(len(_verificacion[0])+20)
+        remito = "SG-000000000" + str(len(_verificacion[0])+26)
     elif len(_verificacion[0]) < 1000:
-        remito = "SG-00000000" + str(len(_verificacion[0])+20)
+        remito = "SG-00000000" + str(len(_verificacion[0])+26)
     elif len(_verificacion[0]) < 10000:
-        remito = "SG-0000000" + str(len(_verificacion[0])+20)
+        remito = "SG-0000000" + str(len(_verificacion[0])+26)
     elif len(_verificacion[0]) < 100000:
-        remito = "SG-000000" + str(len(_verificacion[0])+20)
+        remito = "SG-000000" + str(len(_verificacion[0])+26)
     elif len(_verificacion[0]) < 1000000:
-        remito = "SG-00000" + str(len(_verificacion[0])+20)
+        remito = "SG-00000" + str(len(_verificacion[0])+26)
     elif len(_verificacion[0]) < 10000000:
-        remito = "SG-0000" + str(len(_verificacion[0])+20)
+        remito = "SG-0000" + str(len(_verificacion[0])+26)
     elif len(_verificacion[0]) < 100000000:
-        remito = "SG-000" + str(len(_verificacion[0])+20)
+        remito = "SG-000" + str(len(_verificacion[0])+26)
     elif len(_verificacion[0]) < 1000000000:
-        remito = "SG-00" + str(len(_verificacion[0])+20)
+        remito = "SG-00" + str(len(_verificacion[0])+26)
     elif len(_verificacion[0]) < 10000000000:
-        remito = "SG-0" + str(len(_verificacion[0])+20)
+        remito = "SG-0" + str(len(_verificacion[0])+26)
     elif len(_verificacion[0]) < 100000000000:
-        remito = "SG-" + str(len(_verificacion[0])+20)
+        remito = "SG-" + str(len(_verificacion[0])+26)
     return remito  
 
 def aviso_repetido(_nro_telefono_,_x_):
@@ -298,41 +290,131 @@ def aviso_repetido(_nro_telefono_,_x_):
     opcion = input()
     return(opcion)
 
-def actualizardB(dbConsulta,dbCarga):
-    """En el primer parametro se coloca la base de datos que esta actualizada
-        y en el segundo parametro se coloca la base de datos a actualizar"""
-    try:
-        listaDb = []
-        listaDbLocal = []
-        nroEnvioLocal = []
-        nroEnvioDB = []
-        cursordbConsulta = dbConsulta.cursor()
-        cursordbConsulta.execute("select * from GSolutions")
-        for x in cursordbConsulta.fetchall():
-            listaDb.append(x)
-            nroEnvioDB.append(x[2])
-        cursordbCarga = dbCarga.cursor()
-        cursordbCarga.execute("select * from GSolutions")
-        for y in cursordbCarga.fetchall():
-            listaDbLocal.append(y)
-            nroEnvioLocal.append(str(y[2]))
-        contador = -1
-        existe = False
-        for z in nroEnvioDB:
-            contador = contador +1
-            if str(z) in str(nroEnvioLocal):
-                existe = True
-            if existe == False:
-                try:
-                    viaje = listaDb[contador]
-                    sql = "insert into GSolutions (estado, sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-                    values = viaje[0], viaje[1], viaje[2], viaje[3], viaje[4], viaje[5], viaje[6], viaje[7], viaje[8], viaje[9], viaje[10], viaje[11], viaje[12], viaje[13], viaje[14], viaje[15], viaje[16], viaje[17], viaje[18], viaje[19], viaje[20], viaje[21], viaje[22]
-                    cursordbCarga.execute(sql,values)
-                    dbCarga.commit()
-                except:
-                    print("Error en " + nroEnvioDB[contador])
-            existe = False
-        return True
-    except:
-        return False
-    
+
+def actualizardB(carga = True):
+    """
+    carga:
+        True actualiza la db online con datos de la local
+        False actualiza la db local con datos de la online
+    """
+    if carga:
+        dbCarga = connect_db_hostinger()
+        dbConsulta = connect_db()
+    else:
+        dbCarga = connect_db()
+        dbConsulta = connect_db_hostinger()
+    listaDb = []
+    listaDbLocal = []
+    nroEnvioLocal = []
+    nroEnvioDB = []
+    sqlSelct = "select estado,sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica,Chofer,correo_chofer,precio,costo,Foto from GSolutions"
+    cursordbConsulta = dbConsulta.cursor()
+    cursordbConsulta.execute("select * from GSolutions")
+    for x in cursordbConsulta.fetchall():
+        listaDb.append(x)
+        nroEnvioDB.append(x[2])
+    cursordbCarga = dbCarga.cursor()
+    cursordbCarga.execute("select * from GSolutions")
+    for y in cursordbCarga.fetchall():
+        listaDbLocal.append(y)
+        nroEnvioLocal.append(str(y[2]))
+    dbCarga.close()
+    contador = -1
+    sqlInsert = "insert into GSolutions (estado,sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica,Chofer,correo_chofer,precio,costo,Foto) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+    agregados = 0
+    for z in nroEnvioDB:
+        contador = contador +1
+        if not(str(z) in str(nroEnvioLocal)):
+            agregados += 1
+            viaje = listaDb[contador]
+            estado = str(viaje[0]).replace("'"," ")
+            sim= str(viaje[1]).replace("'"," ")
+            remito= str(viaje[2]).replace("'"," ")
+            nro_telefono= str(viaje[3]).replace("'"," ")
+            envios= str(viaje[4]).replace("'"," ")
+            nombre= str(viaje[5]).replace("'"," ")
+            apellido= str(viaje[6]).replace("'"," ")
+            dni= str(viaje[7]).replace("'"," ")
+            if dni == "None":
+                dni = 0
+            provincia= str(viaje[8]).replace("'"," ")
+            ciudad= str(viaje[9]).replace("'"," ")
+            cp= str(viaje[10]).replace("'"," ")
+            direccion= str(viaje[11]).replace("'"," ")
+            altura= str(viaje[12]).replace("'"," ")
+            torre_monoblock= str(viaje[13]).replace("'"," ")
+            piso= str(viaje[14]).replace("'"," ")
+            departamento= str(viaje[15]).replace("'"," ")
+            manzana= str(viaje[16]).replace("'"," ")
+            casa_lote= str(viaje[17]).replace("'"," ")
+            barrio= str(viaje[18]).replace("'"," ")
+            entrecalles= str(viaje[19]).replace("'"," ")
+            referencia= str(viaje[20]).replace("'"," ")
+            fecha_despacho= str(viaje[21]).replace("'"," ")
+            usuario_logistica= str(viaje[22]).replace("'"," ")
+            Chofer= str(viaje[23]).replace("'"," ")
+            correo_chofer= str(viaje[24]).replace("'"," ")
+            precio= str(viaje[25]).replace("'"," ")
+            if precio == "None":
+                precio = 0
+            costo= str(viaje[26]).replace("'"," ")
+            if costo == "None":
+                costo = 0
+            Foto= str(viaje[27]).replace("'"," ")
+            values = (estado,sim,remito,nro_telefono,envios,nombre,apellido,dni,provincia,ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica,Chofer,correo_chofer,precio,costo,Foto)
+            if carga:
+                dbCarga = connect_db_hostinger()
+                dbConsulta = connect_db()
+            else:
+                dbCarga = connect_db()
+                dbConsulta = connect_db_hostinger()
+            print(sqlInsert)
+            try:
+                cursordbCarga = dbCarga.cursor()
+                cursordbCarga.execute(sqlInsert,values)
+                dbCarga.commit()    
+            except Exception as err:
+                print(err)
+    file = open("file.txt","w")
+    file.write(sqlInsert[:-1])
+    file.close()
+
+
+
+def actualizarEstadosDbLocal():
+    dbLocal = connect_db()
+    dbNube = connect_db_hostinger()
+    cursorNube = dbNube.cursor()
+    cursorLocal = dbLocal.cursor()
+    cursorLocal.execute("select remito,sim from GSolutions where estado is null")
+    resultadoLocal = cursorLocal.fetchall()
+    if resultadoLocal != None:
+        for x in cursorLocal.fetchall():
+            cursorNube.execute(f"select estado, Chofer, correo_chofer, Foto from GSolutions where remito = {x[0]}'")
+            resultado = cursorNube.fetchone()
+            remito = x[0]
+            if resultado != None:
+                estado = resultado[0]
+                chofer = resultado[1]
+                correo_chofer = resultado[2]
+                foto = resultado[3]        
+                cursorLocal.execute("UPDATE GSolutions SET estado = %s, `Chofer` = %s, `correo_chofer` = %s, `Foto` = %s WHERE `remito` = %s;",(estado,chofer,correo_chofer,foto,remito))
+                f"{remito} actualizado"
+                dbLocal.commit()
+
+def selectVendedor():
+    print("""
+            Seleccione el vendedor:
+            1 - GSolutions
+            2 - Comunicaciones Cordillera """)
+
+    opcionCliente = str(input())
+    if opcionCliente == "1":
+        vendedor = "GSolutions"
+    elif opcionCliente == "2":
+        vendedor = "Comunicaciones Cordillera"
+    else: 
+        print("opcion incorrecta!!")
+    if opcionCliente not in ("1","2"):
+        vendedor = selectVendedor()
+    return vendedor
