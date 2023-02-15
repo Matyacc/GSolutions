@@ -161,7 +161,16 @@ def subir_archivo(nombre_archivo,db,_vendedor):
     dia_actual,mes_actual,año_actual,fechaHoy = ahora()
     db = verificar_conexion(db)
     verificacion = verificar_si_existe(db)
-    contenidoArchivo = exel_a_lista(nombre_archivo,"Hoja1")
+    try:
+        contenidoArchivo = exel_a_lista(nombre_archivo,"Hoja1")
+    except:
+        try:
+            contenidoArchivo = exel_a_lista(nombre_archivo,"MMS")
+        except:
+            try:
+                contenidoArchivo = exel_a_lista(nombre_archivo,"Hoja1-1")
+            except:
+                contenidoArchivo = exel_a_lista(nombre_archivo,"hoja1-1")
     total_sobres = len(contenidoArchivo)
     print(f"Son {total_sobres} sobres")
     cant_direcciones = 0

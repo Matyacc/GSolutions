@@ -2,6 +2,13 @@ import os
 import pandas as pd
 from database import connect_db, connect_db_hostinger
 from script import buscador_remito, escribir_exel, escribir_exel_desde_local, generar_etiqueta, subir_archivo, ahora, enviar_correo,limpiarConsola,actualizardB,actualizarEstadosDbLocal,selectVendedor
+
+def escribir_exel_desde_hostinger_select_vendor(nombre_archivo,fechaConsulta,_vendedor):
+    midb = connect_db_hostinger()
+    # pd.read_sql(f'SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,"BUENOS AIRES",ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho = {fechaConsulta} and provincia = "{_vendedor}"',midb).to_excel(f'descargas/{nombre_archivo}')
+    informe = pd.read_sql(f'select sku,Numero_envío,Telefono,comprador,Direccion,Localidad,CP,Vendedor from ViajesFlexs where Fecha = {fechaConsulta} and Vendedor = "{_vendedor}"',midb)
+    informe.to_excel(f'descargas/{nombre_archivo}')
+
 # midb = connect_db()
 # cursor = midb.cursor()
 # cursor.execute("""CREATE TABLE if not exists`GSolutions` (
@@ -90,7 +97,7 @@ def menu():
             if vendedor == "Comunicaciones Cordillera":
                 destino = ["s.torres@comcor.com.ar"]
             asignaciones = f"PLANILLA GLOBAL {dia_actual}-{mes_actual}-{año_actual}.xlsx"
-            escribir_exel_desde_local(asignaciones,"current_date()",vendedor)
+            escribir_exel_desde_hostinger_select_vendor(asignaciones,"current_date()",vendedor)
             enviar_correo(destino,"Asignación",asignaciones)
             actualizardB(True)
 
