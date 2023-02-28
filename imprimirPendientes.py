@@ -65,7 +65,7 @@ def preparar(vendedor,listaSim):
         sim = pedido_confirmado(listaSim)
         listaSim.append(sim)
         archivo_etiqueta = "Etiqueta.pdf"
-        generar_etiqueta(direccion,localidad,comprador,telefono,referencia,observacion,cp,vendedor,archivo_etiqueta)
+        generar_etiqueta(direccion,localidad,comprador,telefono,referencia,observacion,cp,nroEnvio,archivo_etiqueta)
         generarQR(nroEnvio,vendedor,"imagenQR.pdf")
         try:
             #COMENTO LA LINEA SIGUIENTE PARA HACER TEST Y NO UTILIZAR LA IMPRESORA
@@ -135,13 +135,13 @@ def escribirEtiqueta(x,y,text,c):
     texto = str(text)
     if texto != "None":
         c.drawString(x,y,f"{texto}")
-def generar_etiqueta(_direccion, _localidad, _comprador,_nro_telefono,_referencia,_observacion,_cp,_vendedor,_archivo):
+def generar_etiqueta(_direccion, _localidad, _comprador,_nro_telefono,_referencia,_observacion,_cp,_nroEnvio,_archivo):
     inch = 72.0
     cm = inch / 2.54
     mm = cm * 0.1
     c = canvas.Canvas(_archivo, pagesize=(100*mm,50*mm))
-    ajustarTexto(_vendedor,c)
-    escribirEtiqueta(5,125,f"{_vendedor}",c)
+    ajustarTexto(_nroEnvio,c)
+    escribirEtiqueta(5,125,f"{_nroEnvio}",c)
     ajustarTexto(_comprador,c)
     escribirEtiqueta(5, 105,f"{_comprador}",c)
     ajustarTexto(_nro_telefono,c)

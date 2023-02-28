@@ -70,7 +70,7 @@ def enviar_correo(destinos,mensaje_asunto,adjunto):
     mensaje.attach(adjunto_MIME)
     sesion_smtp = smtplib.SMTP('smtp.gmail.com', 587)
     sesion_smtp.starttls()
-    sesion_smtp.login('mmspackcheck.informes@gmail.com','vhyrdmvmfpvdgyes')
+    sesion_smtp.login('mmspackcheck.informes@gmail.com','umamtshtxjogmfyb')
     texto = mensaje.as_string()
     sesion_smtp.sendmail(remitente, destinatarios, texto)
     sesion_smtp.quit()
