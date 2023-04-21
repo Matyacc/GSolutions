@@ -12,7 +12,56 @@ def escribir_exel(nombre_archivo,fechaConsulta,_vendedor):
     informe = pd.read_sql(f'select sku,Numero_envío,Telefono,comprador,Direccion,Localidad,CP,Vendedor from ViajesFlexs where Fecha = {fechaConsulta} and Vendedor = "{_vendedor}"',midb)
     informe.to_excel(f'descargas/{nombre_archivo}')
 
-
+def preparar(vendedor,listaSim):
+    midb = connect_db_hostinger()
+    cursor = midb.cursor()
+    #OBTENGO LA LISTA DE CHIPS QUE SE ENCUENTRAN PENDIENTES DE PREPARAR
+    cursor.execute("select Numero_envío,Telefono,Comprador,Localidad,Direccion,Referencia,Observacion,CP from ViajesFlexs where Vendedor = %s and estado_envio = 'Lista Para Retirar'",(vendedor,))
+    for x in cursor.fetchall():
+        print(x)
+        nroEnvio = x[0]
+        telefono = x[1]
+        comprador = x[2]
+        localidad = x[3]
+        direccion = x[4]
+        referencia = x[5]
+        observacion = x[6]
+        cp = x[7]
+        #PEDIDO CONFIRMADO SE ENCARGA DE OBTENER EL NUMERO DE SIM A REGISTRAR Y VALIDARLO
+        #RECIBE LA LISTA DE TODOS LOS SIMS ASIGNADOS A OTROS ENVIOS
+        sim = pedido_confirmado(listaSim)
+        listaSim.append(sim)
+        archivo_etiqueta = "Etiqueta.pdf"
+        generar_etiqueta(direccion,localidad,comprador,telefono,referencia,observacion,cp,nroEnvio,archivo_etiqueta)
+        generarQR(nroEnvio,vendedor,"imagenQR.pdf")
+        try:
+            #COMENTO LA LINEA SIGUIENTE PARA HACER TEST Y NO UTILIZAR LA IMPRESORA
+            imprimir_etiqueta(archivo_etiqueta)
+            # imprimir_etiqueta("imagenQR.pdf")
+            try:
+                midb = connect_db_hostinger()
+                cursor = midb.cursor()
+                cursor.execute("update ViajesFlexs set sku = %s,estado_envio = 'Listo para salir (Sectorizado)' where Numero_envío = %s",(sim,nroEnvio))
+                midb.commit()
+                midb.close()
+                print("SIM CARGADO")
+            except:
+                print(f"""  
+                        Error en actualizar DB ¡¡¡SIM NO CARGADO!!!
+                        {telefono}
+                        {comprador}
+                        {direccion}
+                        {localidad}
+                    """)
+        except:
+            print("Error con la impresora")
+    if vendedor == "GSolutions":    
+        destino = ["logistica@gsolutions.com.ar"]
+    if vendedor == "Comunicaciones Cordillera":
+        destino = ["s.torres@comcor.com.ar"]
+    asignaciones = f"PLANILLA {vendedor}.xlsx"
+    escribir_exel(asignaciones,"current_date()",vendedor)
+    enviar_correo(destino,"Asignación",asignaciones)
 
 
 
@@ -46,55 +95,7 @@ def verificarVendedorElegido(listaVendedores):
         except:
             continue
     return listaVendedores[opcion-1]
-def preparar(vendedor,listaSim):
-    midb = connect_db_hostinger()
-    cursor = midb.cursor()
-    #OBTENGO LA LISTA DE CHIPS QUE SE ENCUENTRAN PENDIENTES DE PREPARAR
-    cursor.execute("select Numero_envío,Telefono,Comprador,Localidad,Direccion,Referencia,Observacion,CP from ViajesFlexs where Vendedor = %s and estado_envio = 'Lista Para Retirar'",(vendedor,))
-    for x in cursor.fetchall():
-        nroEnvio = x[0]
-        telefono = x[1]
-        comprador = x[2]
-        localidad = x[3]
-        direccion = x[4]
-        referencia = x[5]
-        observacion = x[6]
-        cp = x[7]
-        #PEDIDO CONFIRMADO SE ENCARGA DE OBTENER EL NUMERO DE SIM A REGISTRAR Y VALIDARLO
-        #RECIBE LA LISTA DE TODOS LOS SIMS ASIGNADOS A OTROS ENVIOS
-        sim = pedido_confirmado(listaSim)
-        listaSim.append(sim)
-        archivo_etiqueta = "Etiqueta.pdf"
-        generar_etiqueta(direccion,localidad,comprador,telefono,referencia,observacion,cp,nroEnvio,archivo_etiqueta)
-        generarQR(nroEnvio,vendedor,"imagenQR.pdf")
-        try:
-            #COMENTO LA LINEA SIGUIENTE PARA HACER TEST Y NO UTILIZAR LA IMPRESORA
-            imprimir_etiqueta(archivo_etiqueta)
-            # imprimir_etiqueta("imagenQR.pdf")
-            try:
-                midb = connect_db_hostinger()
-                cursor = midb.cursor()
-                cursor.execute("update ViajesFlexs set sku = %s,estado_envio = 'Listo para salir (Sectorizado)' where Numero_envío = %s",(sim,nroEnvio))
-                midb.commit()
-                midb.close()
-            except:
-                print(f"""  
-                        Error en actualizar DB ¡¡¡SIM NO CARGADO!!!
-                        {telefono}
-                        {comprador}
-                        {direccion}
-                        {localidad}
-                    """)
-        except:
-            print("Error con la impresora")
-    if vendedor == "GSolutions":    
-        destino = ["logistica@gsolutions.com.ar"]
-    if vendedor == "Comunicaciones Cordillera":
-        destino = ["s.torres@comcor.com.ar"]
-    asignaciones = f"PLANILLA {vendedor}.xlsx"
-    escribir_exel(asignaciones,"current_date()",vendedor)
-    enviar_correo(destino,"Asignación",asignaciones)
-#verificarEntero devuelve un numero entero ingresado por el usuario
+
 #verificarEntero devuelve un numero entero ingresado por el usuario
 def verificarEntero():
     entero = -1
@@ -170,12 +171,25 @@ def imprimir_etiqueta(archivo):
         os.startfile(archivo,"print")
 
 
-
 while True:
     listaVendedores,listaSim = consultarPendientes()
     if len(listaVendedores) == 0:
-        print("NO HAY CHIP PARA PREPARAR")
-        input()
-    else:
+        print("NO HAY CHIP PARA PREPARAR 'r' PARA REIMPRIMIR UNA ETIQUETA")
+        option = input()
+        if option == "r":
+            simReimprimir = verificarEntero()
+            while len(str(simReimprimir)) != 19 :
+                if simReimprimir != -1:
+                    print("INGRESO INCORRECTO VUELVA A INTENTAR")
+                print("SCANNER:")
+                simReimprimir = verificarEntero()
+            midb = connect_db_hostinger()
+            cursor = midb.cursor()
+            cursor.execute("select Direccion, Localidad, Comprador,Telefono,Referencia,Observacion,CP,Numero_envío from ViajesFlexs where sku = %s",(simReimprimir,))
+            resu = cursor.fetchone()
+            archivo_etiqueta = "EtiquetaReimpresa.pdf"
+            generar_etiqueta(resu[0],resu[1],resu[2],resu[3],resu[4],resu[5],resu[6],resu[7],archivo_etiqueta)
+            imprimir_etiqueta(archivo_etiqueta)
+    else: 
         vendedor = verificarVendedorElegido(listaVendedores)
-        preparar(vendedor,listaSim)
+        preparar(vendedor, listaSim)
