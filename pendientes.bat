@@ -1,4 +1,4 @@
 @echo off
-cd ("C:\Users\Mi pc\Desktop\GSolutions")
-start python3 -i imprimirPendientes.py
+cd ("C:/GSolutions")
+start py -i imprimirPendientes.py
 

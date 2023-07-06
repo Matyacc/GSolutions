@@ -1,10 +1,10 @@
-from database import connect_db, connect_db_hostinger,verificar_conexion
+from database import connect_db_hostinger
 from script import enviar_correo
-from reportlab.pdfgen import canvas
 import pandas as pd
-from datetime import datetime
+from reportlab.pdfgen import canvas
 import platform
 import os
+import qrcode
 
 def escribir_exel(nombre_archivo,fechaConsulta,_vendedor):
     midb = connect_db_hostinger()
@@ -136,6 +136,7 @@ def escribirEtiqueta(x,y,text,c):
     texto = str(text)
     if texto != "None":
         c.drawString(x,y,f"{texto}")
+        
 def generar_etiqueta(_direccion, _localidad, _comprador,_nro_telefono,_referencia,_observacion,_cp,_nroEnvio,_archivo):
     inch = 72.0
     cm = inch / 2.54
@@ -157,7 +158,6 @@ def generar_etiqueta(_direccion, _localidad, _comprador,_nro_telefono,_referenci
     escribirEtiqueta(5, 5,f"{_cp} {_localidad}",c)
     
     c.save()
-import qrcode
 def generarQR(_nroEnvio,_vendedor,_archivo):
     texto_qr = f"'id':'{_nroEnvio}','sender_id':'{_vendedor}'"
     imagen = qrcode.make(texto_qr)

@@ -6,7 +6,6 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import personalizado
 from database import connect_db, connect_db_hostinger,verificar_conexion
 import os
 from reportlab.pdfgen import canvas
@@ -114,7 +113,10 @@ def generar_etiqueta(_direccion, _altura,_barrio,_ciudad,_nombre,_apellido,_nro_
         localidad = _ciudad
     else:
         localidad = _barrio
-    c = canvas.Canvas(_archivo, pagesize=personalizado)
+    inch = 72.0
+    cm = inch / 2.54
+    mm = cm * 0.1
+    c = canvas.Canvas(_archivo, pagesize=(100*mm,50*mm))
     if (len(_nombre) + len(_apellido)) > 27:
         c.setFont("Helvetica", 12)
     else:
