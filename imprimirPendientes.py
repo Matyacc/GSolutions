@@ -6,6 +6,17 @@ import platform
 import os
 import qrcode
 
+
+def enviarCorreoAsignacion(vendedor,fecha):
+    if vendedor == "GSolutions":    
+        destino = ["logistica@gsolutions.com.ar"]
+    if vendedor == "Comunicaciones Cordillera":
+        destino = ["s.torres@comcor.com.ar"]
+    asignaciones = f"PLANILLA {vendedor}.xlsx"
+    escribir_exel(asignaciones,fecha,vendedor)
+    enviar_correo(destino,"Asignación",asignaciones)
+
+    
 def escribir_exel(nombre_archivo,fechaConsulta,_vendedor):
     midb = connect_db_hostinger()
     # pd.read_sql(f'SELECT estado, sim, remito, nro_telefono,envios,nombre,apellido,dni,"BUENOS AIRES",ciudad,cp,direccion,altura,torre_monoblock,piso,departamento,manzana,casa_lote,barrio,entrecalles,referencia,fecha_despacho,usuario_logistica FROM GSolutions where fecha_despacho = {fechaConsulta} and provincia = "{_vendedor}"',midb).to_excel(f'descargas/{nombre_archivo}')
@@ -32,8 +43,7 @@ def preparar(vendedor,listaSim):
         sim = pedido_confirmado(listaSim)
         listaSim.append(sim)
         archivo_etiqueta = "Etiqueta.pdf"
-        generar_etiqueta(direccion,localidad,comprador,telefono,referencia,observacion,cp,nroEnvio,archivo_etiqueta)
-        generarQR(nroEnvio,vendedor,"imagenQR.pdf")
+        generar_etiqueta(direccion,localidad,comprador,telefono,referencia,observacion,cp,nroEnvio,archivo_etiqueta,vendedor)
         try:
             #COMENTO LA LINEA SIGUIENTE PARA HACER TEST Y NO UTILIZAR LA IMPRESORA
             imprimir_etiqueta(archivo_etiqueta)
@@ -55,13 +65,7 @@ def preparar(vendedor,listaSim):
                     """)
         except:
             print("Error con la impresora")
-    if vendedor == "GSolutions":    
-        destino = ["logistica@gsolutions.com.ar"]
-    if vendedor == "Comunicaciones Cordillera":
-        destino = ["s.torres@comcor.com.ar"]
-    asignaciones = f"PLANILLA {vendedor}.xlsx"
-    escribir_exel(asignaciones,"current_date()",vendedor)
-    enviar_correo(destino,"Asignación",asignaciones)
+    enviarCorreoAsignacion(vendedor,"current_date()")
 
 
 
@@ -137,7 +141,7 @@ def escribirEtiqueta(x,y,text,c):
     if texto != "None":
         c.drawString(x,y,f"{texto}")
         
-def generar_etiqueta(_direccion, _localidad, _comprador,_nro_telefono,_referencia,_observacion,_cp,_nroEnvio,_archivo):
+def generar_etiqueta_OLD(_direccion, _localidad, _comprador,_nro_telefono,_referencia,_observacion,_cp,_nroEnvio,_archivo):
     inch = 72.0
     cm = inch / 2.54
     mm = cm * 0.1
@@ -158,10 +162,35 @@ def generar_etiqueta(_direccion, _localidad, _comprador,_nro_telefono,_referenci
     escribirEtiqueta(5, 5,f"{_cp} {_localidad}",c)
     
     c.save()
-def generarQR(_nroEnvio,_vendedor,_archivo):
+
+
+def generarQR(_nroEnvio,_vendedor,size,x,y,mm,c,_archivo):
     texto_qr = f"'id':'{_nroEnvio}','sender_id':'{_vendedor}'"
+    
+    # Generar código QR
+    qr_data = str(texto_qr)
+    qr_code = qrcode.make(qr_data)
+
+    # Guardar código QR como archivo temporal
+    temp_filename = "temp_qr_code.png"
+    qr_code.save(temp_filename)
+
+    # Tamaño y posición del código QR
+    qr_size = size * mm
+    qr_x = x * mm
+    qr_y = y * mm
+
+    # Dibujar el código QR en la etiqueta
+    c.drawImage(temp_filename, qr_x, qr_y, qr_size, qr_size)
+
+    # Eliminar el archivo temporal
+    os.remove(temp_filename)
+
+
+    
     imagen = qrcode.make(texto_qr)
     imagen.save(_archivo)
+
 def imprimir_etiqueta(archivo):
     if format(platform.system()) == "Linux":
                 pr=os.popen("lpr", "w") 
@@ -170,6 +199,32 @@ def imprimir_etiqueta(archivo):
     else:
         os.startfile(archivo,"print")
 
+
+def generar_etiqueta(_direccion, _localidad, _comprador, _nro_telefono, _referencia, _observacion, _cp, _nroEnvio, _archivo,vendedor):
+    inch = 72.0
+    cm = inch / 2.54
+    mm = cm * 0.1
+    c = canvas.Canvas(_archivo, pagesize=(100 * mm, 100 * mm))
+
+    # Ajustar tamaño de fuente y escribir campos en la etiqueta
+    ajustarTexto(_nroEnvio, c)
+    escribirEtiqueta(5, 125, f"{_nroEnvio}", c)
+    ajustarTexto(_comprador, c)
+    escribirEtiqueta(5, 105, f"{_comprador}", c)
+    ajustarTexto(_nro_telefono, c)
+    escribirEtiqueta(5, 85, str(_nro_telefono), c)
+    ajustarTexto(_referencia, c)
+    escribirEtiqueta(5, 65, f"{_referencia}", c)
+    ajustarTexto(_observacion, c)
+    escribirEtiqueta(5, 45, f"{_observacion}", c)
+    ajustarTexto(_direccion, c)
+    ajustarTexto(_localidad, c)
+    escribirEtiqueta(5, 25, str(_direccion), c)
+    escribirEtiqueta(5, 5, f"{_cp} {_localidad}", c)
+    
+    generarQR(_nroEnvio,vendedor,50,5,50,mm,c,_archivo)
+
+    c.save()
 
 while True:
     listaVendedores,listaSim = consultarPendientes()
@@ -185,10 +240,10 @@ while True:
                 simReimprimir = verificarEntero()
             midb = connect_db_hostinger()
             cursor = midb.cursor()
-            cursor.execute("select Direccion, Localidad, Comprador,Telefono,Referencia,Observacion,CP,Numero_envío from ViajesFlexs where sku = %s",(simReimprimir,))
+            cursor.execute("select Direccion, Localidad, Comprador,Telefono,Referencia,Observacion,CP,Numero_envío,Vendedor from ViajesFlexs where sku = %s",(simReimprimir,))
             resu = cursor.fetchone()
             archivo_etiqueta = "EtiquetaReimpresa.pdf"
-            generar_etiqueta(resu[0],resu[1],resu[2],resu[3],resu[4],resu[5],resu[6],resu[7],archivo_etiqueta)
+            generar_etiqueta(resu[0],resu[1],resu[2],resu[3],resu[4],resu[5],resu[6],resu[7],archivo_etiqueta,resu[8])
             imprimir_etiqueta(archivo_etiqueta)
     else: 
         vendedor = verificarVendedorElegido(listaVendedores)
