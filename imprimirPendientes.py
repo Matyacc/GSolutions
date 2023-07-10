@@ -165,7 +165,7 @@ def generar_etiqueta_OLD(_direccion, _localidad, _comprador,_nro_telefono,_refer
 
 
 def generarQR(_nroEnvio,_vendedor,size,x,y,mm,c,_archivo):
-    texto_qr = f"'id':'{_nroEnvio}','sender_id':'{_vendedor}'"
+    texto_qr = f"{'id':'{_nroEnvio}','sender_id':'{_vendedor}'}"
     
     # Generar código QR
     qr_data = str(texto_qr)
