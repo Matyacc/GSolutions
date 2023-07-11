@@ -229,7 +229,7 @@ def generar_etiqueta(_direccion, _localidad, _comprador, _nro_telefono, _referen
 while True:
     listaVendedores,listaSim = consultarPendientes()
     if len(listaVendedores) == 0:
-        print("NO HAY CHIP PARA PREPARAR 'r' PARA REIMPRIMIR UNA ETIQUETA")
+        print("NO HAY CHIP PARA PREPARAR 'r' PARA REIMPRIMIR UNA ETIQUETA o 'reenviar' para volver a enviar el correo de GSolutions")
         option = input()
         if option == "r":
             simReimprimir = verificarEntero()
@@ -245,8 +245,13 @@ while True:
             archivo_etiqueta = "EtiquetaReimpresa.pdf"
             generar_etiqueta(resu[0],resu[1],resu[2],resu[3],resu[4],resu[5],resu[6],resu[7],archivo_etiqueta,resu[8])
             imprimir_etiqueta(archivo_etiqueta)
-        elif option == "reenviar correo":
-            enviarCorreoAsignacion("GSolutions",)
+        elif option == "reenviar":
+            print("seleccione el vendedor")
+            print("1 GSolutions")
+            optionVendedor=input()
+            if optionVendedor == "1":
+                _vendedor = "GSolutions"
+            enviarCorreoAsignacion(_vendedor,"current_date()")
     else: 
         vendedor = verificarVendedorElegido(listaVendedores)
         preparar(vendedor, listaSim)
