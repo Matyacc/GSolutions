@@ -165,7 +165,7 @@ def generar_etiqueta_OLD(_direccion, _localidad, _comprador,_nro_telefono,_refer
 
 
 def generarQR(_nroEnvio,_vendedor,size,x,y,mm,c,_archivo):
-    texto_qr = "{'id':'"+_nroEnvio+"','sender_id':'"+_vendedor+"'}"
+    texto_qr = f"'id':'{_nroEnvio}','sender_id':'{_vendedor}'"
     
     # Generar código QR
     qr_data = str(texto_qr)
@@ -245,6 +245,8 @@ while True:
             archivo_etiqueta = "EtiquetaReimpresa.pdf"
             generar_etiqueta(resu[0],resu[1],resu[2],resu[3],resu[4],resu[5],resu[6],resu[7],archivo_etiqueta,resu[8])
             imprimir_etiqueta(archivo_etiqueta)
+        elif option == "reenviar correo":
+            enviarCorreoAsignacion("GSolutions",)
     else: 
         vendedor = verificarVendedorElegido(listaVendedores)
         preparar(vendedor, listaSim)
