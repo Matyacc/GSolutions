@@ -47,7 +47,6 @@ def preparar(vendedor,listaSim):
         try:
             #COMENTO LA LINEA SIGUIENTE PARA HACER TEST Y NO UTILIZAR LA IMPRESORA
             imprimir_etiqueta(archivo_etiqueta)
-            # imprimir_etiqueta("imagenQR.pdf")
             try:
                 midb = connect_db_hostinger()
                 cursor = midb.cursor()
@@ -112,7 +111,7 @@ def verificarEntero():
 
 def pedido_confirmado(_listaSim):
     _sim = verificarEntero()
-    while len(str(_sim)) != 19 :
+    while len(str(_sim)) != 19 or _sim == None:
         if _sim != -1:
             print("INGRESO INCORRECTO VUELVA A INTENTAR")
         print("SCANNER:")
