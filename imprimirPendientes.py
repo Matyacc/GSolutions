@@ -50,7 +50,7 @@ def preparar(vendedor,listaSim):
             try:
                 midb = connect_db_hostinger()
                 cursor = midb.cursor()
-                cursor.execute("update ViajesFlexs set sku = %s,estado_envio = 'Listo para salir (Sectorizado)' where Numero_envío = %s",(sim,nroEnvio))
+                cursor.execute("update ViajesFlexs set sku = %s,estado_envio = 'Sectorizado' where Numero_envío = %s",(sim,nroEnvio))
                 midb.commit()
                 midb.close()
                 print("SIM CARGADO")
