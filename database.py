@@ -3,8 +3,8 @@ import mysql.connector
 def connect_db_hostinger():
     midb = mysql.connector.connect(
     host="109.106.251.113",
-    user="mmslogis_GS",
-    password="12345",
+    user="mmslogis",
+    password="Josu2019",
     database="mmslogis_MMSPack"
     )
     return midb

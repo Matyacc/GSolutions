@@ -1,4 +1,5 @@
 from database import connect_db_hostinger
+from datetime import datetime,timedelta
 from script import enviar_correo
 import pandas as pd
 from reportlab.pdfgen import canvas
@@ -27,7 +28,14 @@ def preparar(vendedor,listaSim):
     midb = connect_db_hostinger()
     cursor = midb.cursor()
     #OBTENGO LA LISTA DE CHIPS QUE SE ENCUENTRAN PENDIENTES DE PREPARAR
-    cursor.execute("select Numero_envío,Telefono,Comprador,Localidad,Direccion,Referencia,Observacion,CP from ViajesFlexs where Vendedor = %s and estado_envio = 'Lista Para Retirar'",(vendedor,))
+    cursor.execute("""select V.Numero_envío,V.Telefono,V.Comprador,V.Localidad,V.Direccion,V.Referencia,
+                   "",V.CP,V.id
+                from ViajesFlexs AS V inner join historial_estados as H on V.id = H.viajesflexs_id
+                where H.id in (select max(H.id) from historial_estados as H 
+                                inner join ViajesFlexs as V on V.Numero_envío = H.Numero_envío
+                            where V.Vendedor = %s group by H.viajesflexs_id)
+                and V.Vendedor = %s and H.estado_envio = 'Lista Para Retirar'""",
+                   (vendedor,vendedor))
     for x in cursor.fetchall():
         print(x)
         nroEnvio = x[0]
@@ -38,6 +46,7 @@ def preparar(vendedor,listaSim):
         referencia = x[5]
         observacion = x[6]
         cp = x[7]
+        viajesflexs_id = x[8]
         #PEDIDO CONFIRMADO SE ENCARGA DE OBTENER EL NUMERO DE SIM A REGISTRAR Y VALIDARLO
         #RECIBE LA LISTA DE TODOS LOS SIMS ASIGNADOS A OTROS ENVIOS
         sim = pedido_confirmado(listaSim)
@@ -50,17 +59,24 @@ def preparar(vendedor,listaSim):
             try:
                 midb = connect_db_hostinger()
                 cursor = midb.cursor()
-                cursor.execute("update ViajesFlexs set sku = %s,estado_envio = 'Sectorizado' where Numero_envío = %s",(sim,nroEnvio))
+                cursor.execute("update ViajesFlexs set sku = %s where Numero_envío = %s",(sim,nroEnvio))
+                midb.commit()
+                cursor.execute("""insert into historial_estados (Fecha,Hora,Numero_envío,viajesflexs_id,estado_envio)
+                               values (%s,%s,%s,%s)""",
+                ((datetime.now()-timedelta(hours=3)).date(),
+                               (datetime.now()-timedelta(hours=3)).time(),
+                                nroEnvio,viajesflexs_id,"Sectorizado"))
                 midb.commit()
                 midb.close()
                 print("SIM CARGADO")
-            except:
+            except Exception as err:
                 print(f"""  
                         Error en actualizar DB ¡¡¡SIM NO CARGADO!!!
                         {telefono}
                         {comprador}
                         {direccion}
                         {localidad}
+                        {err}
                     """)
         except:
             print("Error con la impresora")
@@ -73,7 +89,10 @@ def consultarPendientes():
     cursor = midb.cursor()
     vendedores = []
     simUtilizado = []
-    cursor.execute("select Vendedor from ViajesFlexs where tipo_envio = 15 and estado_envio = 'Lista Para Retirar' group by Vendedor")
+    cursor.execute("""select V.Vendedor from ViajesFlexs as V
+                   inner join historial_estados as H on V.Numero_envío = H.Numero_envío
+                   where H.id in (select max(id) from historial_estados group by Numero_envío)
+                    and V.tipo_envio = 15 and H.estado_envio = 'Lista Para Retirar' group by Vendedor""")
     resu = cursor.fetchall()
     cursor.execute("select sku from ViajesFlexs where tipo_envio = 15")
     resuSim = cursor.fetchall()
