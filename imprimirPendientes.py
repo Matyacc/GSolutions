@@ -62,7 +62,7 @@ def preparar(vendedor,listaSim):
                 cursor.execute("update ViajesFlexs set sku = %s where Numero_envío = %s",(sim,nroEnvio))
                 midb.commit()
                 cursor.execute("""insert into historial_estados (Fecha,Hora,Numero_envío,viajesflexs_id,estado_envio)
-                               values (%s,%s,%s,%s)""",
+                               values (%s,%s,%s,%s,%s)""",
                 ((datetime.now()-timedelta(hours=3)).date(),
                                (datetime.now()-timedelta(hours=3)).time(),
                                 nroEnvio,viajesflexs_id,"Sectorizado"))
