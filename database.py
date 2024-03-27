@@ -2,10 +2,10 @@ import mysql.connector
 
 def connect_db_hostinger():
     midb = mysql.connector.connect(
-    host="109.106.251.113",
+    host="179.43.117.74",
     user="mmslogis",
     password="Josu2019",
-    database="mmslogis_MMSPack"
+    database="mmspack"
     )
     return midb
 

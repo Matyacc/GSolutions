@@ -258,7 +258,7 @@ while True:
                 simReimprimir = verificarEntero()
             midb = connect_db_hostinger()
             cursor = midb.cursor()
-            cursor.execute("select Direccion, Localidad, Comprador,Telefono,Referencia,Observacion,CP,Numero_envío,Vendedor from ViajesFlexs where sku = %s",(simReimprimir,))
+            cursor.execute("select Direccion, Localidad, Comprador,Telefono,Referencia,null,CP,Numero_envío,Vendedor from ViajesFlexs where sku = %s",(simReimprimir,))
             resu = cursor.fetchone()
             archivo_etiqueta = "EtiquetaReimpresa.pdf"
             generar_etiqueta(resu[0],resu[1],resu[2],resu[3],resu[4],resu[5],resu[6],resu[7],archivo_etiqueta,resu[8])
